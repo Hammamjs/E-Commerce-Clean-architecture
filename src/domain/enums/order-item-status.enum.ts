@@ -1,0 +1,7 @@
+export enum ItemStatus {
+  PENDING = 'PENDING',
+  CONFIRMED = 'CONFIRMED',
+  SHIPPED = 'SHIPPED',
+  ARRIVED = 'ARRIVED',
+  CANCELED = 'CANCELED',
+}
