@@ -2,57 +2,71 @@ import { IUserRepository } from 'src/domain/repositories/user.repository.interfa
 import { User } from 'src/domain/entities/user.entity';
 import { UserRow } from './user.row';
 import { Pool } from 'pg';
-import { PgBaseUserRepository } from './pg.base.users.repository';
+import { HelperQuery } from 'src/infrastructure/shared/helper-query';
+import { SQL } from './SQL';
 
-export class PgUserRepository
-  extends PgBaseUserRepository
-  implements IUserRepository
-{
-  protected columnMap = { fullName: 'full_name', email: 'email' };
+export class PgUserRepository implements IUserRepository {
+  private readonly _columnMap = { fullName: 'full_name', email: 'email' };
+  private readonly _allowedColumns = ['email', 'fullName'];
 
-  constructor(conn: Pool) {
-    super(conn);
-  }
+  constructor(
+    private readonly _conn: Pool,
+    private readonly _helperQuery: HelperQuery,
+  ) {}
 
-  private toEntity(row: UserRow) {
+  private _toEntity(row: UserRow) {
     return new User(row.fullName, row.email, row.id, row.createdAt);
   }
 
   async findAll() {
-    const rows = await super.getAllRows();
-    return rows.map((row) => this.toEntity(row));
+    const { rows: users } = await this._conn.query<UserRow>(SQL.findAll);
+    return users.map((user) => this._toEntity(user));
   }
 
   async findById(id: string) {
-    const row = await this.getOne(id);
-    return row ? this.toEntity(row) : null;
+    const { rows: user } = await this._conn.query<UserRow>(SQL.findById, [id]);
+    return this._toEntity(user[0]);
   }
 
-  async save(user: User): Promise<User> {
-    let row: UserRow;
-    if (user.id) {
-      const exists = await this.findById(user.id);
-      row = exists
-        ? await this.update(user.id, {
-            email: user.email,
-            fullName: user.fullName,
-          })
-        : await this.create({ email: user.email, fullName: user.fullName });
-    } else {
-      row = await this.create({ email: user.email, fullName: user.fullName });
-    }
+  async create(user: User): Promise<User> {
+    const { toUpdate, toUpdateSignature, values } = this._helperQuery.create(
+      user,
+      this._allowedColumns,
+      this._columnMap,
+    );
 
-    return this.toEntity(row);
+    const { rows: userData } = await this._conn.query<UserRow>(
+      SQL.create(toUpdate, toUpdateSignature),
+      values,
+    );
+    return this._toEntity(userData[0]);
+  }
+
+  async update(user: User): Promise<User> {
+    const { toUpdate, values } = this._helperQuery.update(
+      user,
+      this._allowedColumns,
+      this._columnMap,
+    );
+
+    const { rows: userData } = await this._conn.query<UserRow>(
+      SQL.update(toUpdate, values.length + 1),
+      [...values, user.id],
+    );
+    return this._toEntity(userData[0]);
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const row = await this.getByEmail(email);
-    return row ? this.toEntity(row) : null;
+    const { rows: user } = await this._conn.query<UserRow>(SQL.findByEmail, [
+      email,
+    ]);
+    return this._toEntity(user[0]);
   }
 
-  async deleteById(id: string): Promise<User | null> {
-    const row = await this.delete(id);
-
-    return this.toEntity(row);
+  async deleteById(id: string): Promise<User> {
+    const { rows: deletedUser } = await this._conn.query<UserRow>(SQL.delete, [
+      id,
+    ]);
+    return this._toEntity(deletedUser[0]);
   }
 }
