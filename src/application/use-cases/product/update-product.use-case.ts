@@ -5,10 +5,10 @@ import { IProductRepository } from 'src/domain/repositories/product.repository.i
 
 export class UpdateProductUseCase implements IUseCase<
   UpdateProductCommand,
-  Products
+  Products | null
 > {
   constructor(private productRespository: IProductRepository) {}
-  async execute(data: UpdateProductCommand): Promise<Products> {
+  async execute(data: UpdateProductCommand): Promise<Products | null> {
     if (!data.id) throw new Error('Product id not exists');
 
     const product = await this.productRespository.findProduct(data.id);
@@ -19,6 +19,6 @@ export class UpdateProductUseCase implements IUseCase<
     if (data.price !== undefined) product.setPrice(data.price);
     if (data.inStock !== undefined) product.setStock(data.inStock);
 
-    return await this.productRespository.save(product);
+    return await this.productRespository.update(product);
   }
 }

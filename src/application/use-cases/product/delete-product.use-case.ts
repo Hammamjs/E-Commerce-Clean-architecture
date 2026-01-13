@@ -3,13 +3,13 @@ import { IUseCase } from 'src/application/use-cases/base.use-case';
 import { Products } from 'src/domain/entities/products.entity';
 import { IProductRepository } from 'src/domain/repositories/product.repository.interface';
 
-export class DeleteProductUseCase implements IUseCase<string, Products> {
+export class DeleteProductUseCase implements IUseCase<string, Products | null> {
   constructor(private productRepository: IProductRepository) {}
 
-  async execute(productId: string): Promise<Products> {
+  async execute(productId: string): Promise<Products | null> {
     const product = await this.productRepository.findProduct(productId);
     if (!product) throw new NotFoundException('Product not exists');
 
-    return await this.productRepository.deleteProduct(productId);
+    return this.productRepository.deleteProduct(productId);
   }
 }

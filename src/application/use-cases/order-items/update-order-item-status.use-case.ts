@@ -10,9 +10,8 @@ export class UpdateOrderItemStatusUseCase implements IUseCase<
   constructor(private readonly orderItemRepository: IOrderItemsRepository) {}
   async execute(command: UpdateOrderItemStatusCommand): Promise<OrderItem> {
     const item = await this.orderItemRepository.findItemById(command.itemId);
-
     item.changeStatus(command.newStatus);
 
-    return await this.orderItemRepository.save(item);
+    return await this.orderItemRepository.update(item);
   }
 }

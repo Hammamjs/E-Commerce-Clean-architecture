@@ -1,19 +1,30 @@
 import { IProductRepository } from 'src/domain/repositories/product.repository.interface';
-import { Pool } from 'pg';
-import { PgBaseProductsRepository } from './pg.base.products.repository';
+import { Pool, PoolClient } from 'pg';
 import { Products } from 'src/domain/entities/products.entity';
+import { asyncContext, AsyncContext } from '../async-context/async-context';
+import { InsufficientQuantityError } from 'src/application/errors/insufficient.error';
+import { InternalServerError } from 'src/application/errors/internal-server.error';
+import { SQL } from './SQL';
 import { ProductRow } from './product.row';
-import { NotFoundException } from '@nestjs/common';
 
-export class PgProductsRepository
-  extends PgBaseProductsRepository
-  implements IProductRepository
-{
-  constructor(conn: Pool) {
-    super(conn);
+export class PgProductsRepository implements IProductRepository {
+  constructor(
+    private readonly _conn: Pool,
+    private readonly _asyncContext: AsyncContext = asyncContext,
+  ) {}
+
+  private readonly _allowedColumns = ['name', 'price', 'inStock'];
+  private readonly _columnMap = {
+    name: 'name',
+    price: 'price',
+    in_stock: 'inStock',
+  };
+
+  private _getClient(): Pool | PoolClient {
+    return this._asyncContext.getClient() ?? this._conn;
   }
 
-  private toEntity(row: ProductRow): Products {
+  private _toEntity(row: ProductRow): Products {
     return new Products(
       row.name,
       row.price,
@@ -24,46 +35,126 @@ export class PgProductsRepository
   }
 
   async findAll(): Promise<Products[]> {
-    const rows = await this.getAllRows();
-    if (!rows.length) throw new Error('No Product found');
-    return rows.map((row) => this.toEntity(row));
+    const client = this._getClient();
+    const { rows, rowCount } = await client.query<ProductRow>(SQL.findAllQuery);
+
+    if (rowCount === 0) return [];
+
+    return rows.map((row) => this._toEntity(row));
   }
 
-  async findProduct(productId: string): Promise<Products | null> {
-    const row = await this.findOne(productId);
-    if (!row) throw new NotFoundException('product not found');
-    return this.toEntity(row);
+  async findProduct(id: string): Promise<Products | null> {
+    const client = this._getClient();
+    const { rows, rowCount } = await client.query<ProductRow>(
+      SQL.findOneQuery,
+      [id],
+    );
+
+    if (rowCount === 0) return null;
+
+    return this._toEntity(rows[0]);
   }
 
-  async increaseStock(productId: string, amount: number): Promise<Products> {
-    await this.increaseStockTx(productId, amount);
-    const row = await this.findOne(productId);
-    if (!row) throw new Error('Product not found');
-    return this.toEntity(row);
+  async increaseStockWitTx(
+    productId: string,
+    quantity: number,
+  ): Promise<{ inStock: number }> {
+    const client = this._getClient();
+    const { rowCount, rows } = await client.query<{ inStock: number }>(
+      SQL.increaseStockQuery,
+      [productId, quantity],
+    );
+
+    if (rowCount === 0) throw new InternalServerError();
+
+    return rows[0];
   }
 
-  async decreaseStock(productId: string, amount: number): Promise<Products> {
-    await this.decreaseStockTx(productId, amount);
-    const row = await this.findOne(productId);
-    if (!row) throw new Error('Product not found');
-    return this.toEntity(row);
+  async decreaseStockWitTx(productId: string, quantity: number): Promise<void> {
+    const client = this._getClient();
+    const { rowCount } = await client.query<{ in_stock: number }>(
+      SQL.dcreaseStockQuery,
+      [productId, quantity],
+    );
+
+    if (rowCount === 0) throw new InsufficientQuantityError();
+
+    return;
   }
 
-  async save(product: Products): Promise<Products> {
-    const res = product.id
-      ? await this.update(product.id, {
-          name: product.name,
-          price: product.price,
-        })
-      : await this.create(product);
-    return this.toEntity(res);
+  async create(product: Products): Promise<Products | null> {
+    const { fields, fieldsCount, values } =
+      this._createProductValidation(product);
+
+    if (!values.length) return null;
+
+    const client = this._getClient();
+
+    const { rows } = await client.query<ProductRow>(
+      SQL.createQuery(fields, fieldsCount),
+      values,
+    );
+    return this._toEntity(rows[0]);
   }
 
-  async deleteProduct(productId: string): Promise<Products> {
-    if (!productId) throw new NotFoundException('Product id not provided');
-    const res = await this.findOne(productId);
-    if (!res) throw new NotFoundException('Product not exists');
-    const row = await this.delete(productId);
-    return this.toEntity(row);
+  async update(product: Products): Promise<Products | null> {
+    const { fields, values } = this._updateProductValidation(product);
+
+    if (!fields || !values.length) return null;
+
+    const client = this._getClient();
+
+    const { rows } = await client.query<ProductRow>(
+      `
+       UPDATE products SET ${fields} WHERE id = $${values.length + 1} RETURNING id, name, price, in_stock AS "inStock", created_at AS "createdAt"
+       `,
+      [...values, product.id],
+    );
+    return this._toEntity(rows[0]);
+  }
+
+  async deleteProduct(id: string): Promise<Products | null> {
+    const client = this._getClient();
+
+    const { rows, rowCount } = await client.query<ProductRow>(
+      SQL.deleteOneQuery,
+      [id],
+    );
+    if (rowCount === 0) return null;
+    return this._toEntity(rows[0]);
+  }
+
+  // ******* Helper utilty ************
+
+  private _updateProductValidation(data: Products) {
+    const entries = Object.entries(data).filter(
+      ([k, v]) => v !== undefined && this._allowedColumns.includes(k),
+    );
+
+    const fields = entries
+      .map(([k], i) => `${this._columnMap[k]} = $${i + 1}`)
+      .join(', ');
+    const values = entries.map(([, v]) => v as string);
+
+    return {
+      fields,
+      values,
+    };
+  }
+
+  private _createProductValidation(product: Products) {
+    const entries = Object.entries(product).filter(
+      ([k, v]) => v !== undefined && this._allowedColumns.includes(k),
+    );
+
+    const fields = entries.map(([k]) => `${this._columnMap[k]}`).join(', ');
+    const fieldsCount = entries.map((_, i) => `$${i + 1}`).join(', ');
+    const values = entries.map(([, v]) => v as string);
+
+    return {
+      fields,
+      fieldsCount,
+      values,
+    };
   }
 }

@@ -6,7 +6,7 @@ import { ICartRepository } from 'src/domain/repositories/cart.repository.interfa
 
 export class CheckoutCartUseCase implements IUseCase<
   UpdateCartChekoutStatus,
-  Cart
+  Cart | null
 > {
   constructor(private cartRepository: ICartRepository) {}
   async execute(command: UpdateCartChekoutStatus) {
@@ -18,6 +18,6 @@ export class CheckoutCartUseCase implements IUseCase<
       cart.checkout();
     }
 
-    return this.cartRepository.updateCart(cart);
+    return this.cartRepository.update(cart);
   }
 }

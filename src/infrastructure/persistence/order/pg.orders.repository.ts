@@ -1,23 +1,27 @@
 import { IOrdersRepository } from 'src/domain/repositories/order.repository.interface';
-import { PgBaseOrdersRepository } from './pg.base.orders.repository';
 import { Pool } from 'pg';
 import { Orders } from 'src/domain/entities/orders.entity';
-import { OrderRow } from './order.row';
-import { PgBaseOrderItemsRepository } from '../order-items/pg.base.order-items.repository';
-import { OrderItem } from 'src/domain/entities/order-item.entity';
-import { NotFoundException } from '@nestjs/common';
 import { Status } from 'src/domain/enums/order-status.enum';
+import { OrderRow } from './order.row';
+import { SQL } from './SQL';
+import { asyncContext, AsyncContext } from '../async-context/async-context';
 
-export class PgOrdersRepository
-  extends PgBaseOrdersRepository
-  implements IOrdersRepository
-{
+export class PgOrdersRepository implements IOrdersRepository {
   constructor(
-    readonly conn: Pool,
-    private orderItemRepo: PgBaseOrderItemsRepository,
-  ) {
-    super(conn);
+    readonly _conn: Pool,
+    private _asyncContext: AsyncContext = asyncContext,
+  ) {}
+
+  private _getClient() {
+    return this._asyncContext.getClient() ?? this._conn;
   }
+
+  // data need to converted to snakeCase
+  private columnMap = {
+    total: 'total',
+    status: 'status',
+    userId: 'user_id',
+  };
 
   private toEntity(row: OrderRow) {
     return new Orders(
@@ -30,51 +34,63 @@ export class PgOrdersRepository
   }
 
   // Get all users orders
-  async findAll(userId: string) {
-    const rows = await this.findOrdersById(userId);
-    return rows.map((row) => this.toEntity(row));
-  }
-
-  // Get unique order
-  async findById(orderId: string): Promise<Orders> {
-    const orderRow = await this.findOne(orderId);
-    console.debug(orderRow);
-    if (!orderRow) throw new NotFoundException('Order with this id not exist');
-
-    const itemsRow = await this.orderItemRepo.getUserOrdersHistory([]);
-
-    const items = itemsRow.map(
-      (item) =>
-        new OrderItem(
-          item.id,
-          item.orderId,
-          item.productId,
-          item.unitPrice,
-          item.quantity,
-          item.status,
-          item.createdAt,
-        ),
+  async findAll(userId: string): Promise<Orders[]> {
+    const client = this._getClient();
+    const { rows: orders, rowCount } = await client.query<OrderRow>(
+      SQL.findAllOrdersPerUserQuery,
+      [userId],
     );
-    return this.toEntity({ ...orderRow, items });
+
+    if (rowCount === 0) return [];
+
+    return orders.map((order) => this.toEntity(order));
   }
 
-  async createOrder(userId: string, total: number): Promise<Orders> {
-    const row = await this.createTx(userId, total);
-    return this.toEntity(row);
+  async findById(id: string): Promise<Orders | null> {
+    const client = this._getClient();
+    const { rows, rowCount } = await client.query<OrderRow>(SQL.findByIdQuery, [
+      id,
+    ]);
+    if (rowCount === 0) return null;
+    return this.toEntity(rows[0]);
+  }
+
+  async createOrder(userId: string, total: number): Promise<Orders | null> {
+    const client = this._getClient();
+    const { rows, rowCount } = await client.query<OrderRow>(SQL.createQuery, [
+      userId,
+      total,
+    ]);
+
+    if (rowCount === 0) return null;
+
+    return this.toEntity(rows[0]);
   }
 
   async updateOrderStatus(
     userId: string,
     orderId: string,
     status: Status,
-  ): Promise<Orders> {
-    const row = await this.updateOneOrderStatus(userId, orderId, status);
-    return this.toEntity(row);
+  ): Promise<Orders | null> {
+    const client = this._getClient();
+    const { rows, rowCount } = await client.query<OrderRow>(
+      SQL.updateStatusQuery,
+      [status, orderId, userId],
+    );
+
+    if (rowCount === 0) return null;
+
+    return this.toEntity(rows[0]);
   }
 
-  async deleteOrder(orderId: string): Promise<Orders> {
-    const row = await this.findOne(orderId);
-    if (!row) throw new NotFoundException('Order not exist');
-    return this.toEntity(row);
+  async deleteOrder(id: string): Promise<Orders | null> {
+    const client = this._getClient();
+    const { rows, rowCount } = await client.query<OrderRow>(SQL.deleteQuery, [
+      id,
+    ]);
+
+    if (rowCount === 0) return null;
+
+    return this.toEntity(rows[0]);
   }
 }

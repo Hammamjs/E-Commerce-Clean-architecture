@@ -1,19 +1,24 @@
 import { IOrderItemsRepository } from 'src/domain/repositories/order-items.repository.interface';
-import { PgBaseOrderItemsRepository } from './pg.base.order-items.repository';
-import { Pool } from 'pg';
+import { Pool, PoolClient } from 'pg';
 import { OrderItem } from 'src/domain/entities/order-item.entity';
 import { OrderItemRow } from './order-item.row';
-import { NotFoundError } from 'src/application/errors/not-found.error';
+import { SQL } from './SQL';
+import { asyncContext, AsyncContext } from '../async-context/async-context';
 
-export class PgOrderItemRepository
-  extends PgBaseOrderItemsRepository
-  implements IOrderItemsRepository
-{
-  constructor(readonly conn: Pool) {
-    super(conn);
-  }
+export class PgOrderItemRepository implements IOrderItemsRepository {
+  constructor(
+    readonly _conn: Pool,
+    private _asyncContext: AsyncContext = asyncContext,
+  ) {}
 
-  private toEntity(row: OrderItemRow) {
+  // protected columnMap = {
+  //   orderId: 'order_id',
+  //   productId: 'product_id',
+  //   unitPrice: 'unit_price',
+  //   status: 'status',
+  // };
+
+  private _toEntity(row: OrderItemRow) {
     return new OrderItem(
       row.id,
       row.orderId,
@@ -25,27 +30,44 @@ export class PgOrderItemRepository
     );
   }
 
-  async findItemById(itemId: string): Promise<OrderItem> {
-    const row = await this.findOne(itemId);
-    if (!row) throw new NotFoundError('No item exists');
-    return this.toEntity(row);
+  private getClient(): Pool | PoolClient {
+    return this._asyncContext.getClient() ?? this._conn;
+  }
+  async findItemById(id: string): Promise<OrderItem> {
+    const client = this.getClient();
+    const { rows } = await client.query<OrderItemRow>(SQL.findById, [id]);
+    return this._toEntity(rows[0]);
   }
 
   async findByOrdersId(orderIds: string[]): Promise<OrderItem[]> {
-    const rows = await this.getUserOrdersHistory(orderIds);
-    return rows.map((row) => this.toEntity(row));
+    const client = this.getClient();
+    const { rows, rowCount } = await client.query<OrderItemRow>(
+      SQL.findByOrdersIdQuery,
+      [orderIds],
+    );
+
+    if (rowCount === 0) return [];
+
+    return rows.map((row) => this._toEntity(row));
   }
 
-  async save(item: OrderItem): Promise<OrderItem> {
-    const row = await this.update(item.id, { status: item.status });
+  async update(item: OrderItem): Promise<OrderItem> {
+    const client = this.getClient();
 
-    return this.toEntity(row);
+    const { rows } = await client.query<OrderItemRow>(SQL.updateQuery, [
+      item.status,
+      item.id,
+    ]);
+
+    return this._toEntity(rows[0]);
   }
 
   async createFromCart(orderId: string, cartId: string): Promise<OrderItem[]> {
-    if (!orderId) throw new NotFoundError('Order id not provided');
-    const rows = await this.createTx(orderId, cartId);
-    if (!rows) throw new NotFoundError('Create orderItem From cart failed');
-    return rows.map((row) => this.toEntity(row));
+    const client = this.getClient();
+    const { rows } = await client.query<OrderItemRow>(
+      SQL.createItemsFromCartQuery,
+      [orderId, cartId],
+    );
+    return rows.map((row) => this._toEntity(row));
   }
 }
