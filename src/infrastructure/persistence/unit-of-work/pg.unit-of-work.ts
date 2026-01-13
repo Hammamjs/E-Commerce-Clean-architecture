@@ -1,24 +1,28 @@
-import { Inject } from '@nestjs/common';
-import { Pool, PoolClient } from 'pg';
+import { Pool } from 'pg';
 import { IUnitOfWork } from 'src/domain/repositories/unit-of-work.repository.interface';
-import { PG_CONNECTION } from 'src/infrastructure/database/pg-connection';
+import { asyncContext, AsyncContext } from '../async-context/async-context';
 
 export class PgUnitOfWork implements IUnitOfWork {
-  constructor(@Inject(PG_CONNECTION) private readonly pool: Pool) {}
-  async runInTransaction<T>(
-    work: (client: PoolClient) => Promise<T>,
-  ): Promise<T> {
-    const client = await this.pool.connect();
+  constructor(
+    private readonly _pool: Pool,
+    private readonly _asyncContext: AsyncContext = asyncContext,
+  ) {}
+  async runInTransaction<T>(fn: () => Promise<T>): Promise<T> {
+    if (this._asyncContext.isTransaction()) {
+      return fn();
+    }
+
+    const client = await this._pool.connect();
     try {
       await client.query('BEGIN');
-      const result = await work(client);
+      const result = await this._asyncContext.run({ client }, () => fn());
       await client.query('COMMIT');
       return result;
     } catch (err) {
       try {
         await client.query('ROLLBACK');
       } catch (rollbackErr) {
-        console.error(rollbackErr);
+        console.error('Rollback failed ', rollbackErr);
       }
       throw err;
     } finally {

@@ -1,16 +1,24 @@
 import { ICartRepository } from 'src/domain/repositories/cart.repository.interface';
-import { CartRow } from './cart.row';
 import { Cart } from 'src/domain/entities/cart.entity';
-import { PgBaseCartRepository } from './pg.base.cart.repository';
-import { Pool, PoolClient } from 'pg';
+import { Pool } from 'pg';
+import { CartRow } from './cart.row';
+import { SQL } from './SQL';
 import { NotFoundError } from 'src/application/errors/not-found.error';
+import { InternalServerError } from 'src/application/errors/internal-server.error';
+import { asyncContext, AsyncContext } from '../async-context/async-context';
 
-export class PgCartRepository
-  extends PgBaseCartRepository
-  implements ICartRepository
-{
-  constructor(conn: Pool) {
-    super(conn);
+export class PgCartRepository implements ICartRepository {
+  constructor(
+    private readonly _conn: Pool,
+    private readonly _asyncContext: AsyncContext = asyncContext,
+  ) {}
+
+  private _getClient() {
+    return this._asyncContext.getClient() ?? this._conn;
+  }
+
+  private toEntity(row: CartRow) {
+    return new Cart(row.userId, row.id, row.status, row.createdAt);
   }
 
   protected columnMap = {
@@ -18,45 +26,76 @@ export class PgCartRepository
     status: 'status',
   };
 
-  private toRow(cart: Cart) {
-    return {
-      userId: cart.userId,
-      status: cart.getStatus(),
-    };
-  }
-
-  // private toEntity(row: CartRow) {
-  //   return new Cart(row.userId, row.id, row.status, row.createdAt);
+  // private toRow(cart: Cart) {
+  //   return {
+  //     userId: cart.userId,
+  //     status: cart.getStatus(),
+  //   };
   // }
 
-  async findAll(): Promise<Cart[]> {
-    const rows = await super.getAllRows();
-    return rows;
-  }
-
   async findById(id: string): Promise<Cart | null> {
-    const exists = await this.findOne(id);
-    return exists ?? null;
+    const client = this._getClient();
+    const { rows, rowCount } = await client.query<CartRow>(SQL.findByIdQuery, [
+      id,
+    ]);
+    if (rowCount === 0) return null;
+    return this.toEntity(rows[0]);
   }
 
-  async updateCart(cart: Cart): Promise<Cart> {
-    if (!cart.id) throw new NotFoundError();
-    const row = await this.update(cart.id, { status: cart.status });
-    return row;
+  async update(cart: Cart): Promise<Cart> {
+    const { rows, rowCount } = await this._conn.query<CartRow>(SQL.updateCart, [
+      cart.status,
+      cart.id,
+    ]);
+
+    if (rowCount === 0) throw new NotFoundError('Cart not found');
+    return this.toEntity(rows[0]);
   }
 
-  public createCart = async (client: PoolClient, userId: string) => {
-    const row = await this.createUserCart(client, { userId });
-    return row;
+  public create = async (userId: string) => {
+    const client = this._getClient();
+    const { rows, rowCount } = await client.query<CartRow>(SQL.create, [
+      userId,
+    ]);
+
+    if (rowCount === 0) throw new InternalServerError();
+
+    return this.toEntity(rows[0]);
   };
 
-  async deleteById(id: string): Promise<Cart> {
-    const row = await this.deleteTx(id);
-    return row;
+  async deleteById(id: string): Promise<Cart | null> {
+    const client = this._getClient();
+
+    const { rows, rowCount } = await client.query<CartRow>(SQL.deleteQuery, [
+      id,
+    ]);
+
+    if (rowCount === 0) return null;
+
+    return this.toEntity(rows[0]);
   }
 
   async findByUserId(userId: string): Promise<Cart> {
-    const row = await this.getUserCart(userId);
-    return row;
+    const client = this._getClient();
+    const { rows, rowCount } = await client.query<CartRow>(SQL.findUserCart, [
+      userId,
+    ]);
+
+    if (rowCount === 0) throw new NotFoundError('User cart not exist');
+
+    return this.toEntity(rows[0]);
+  }
+
+  async delete(id: string): Promise<Cart | null> {
+    const client = this._getClient();
+    const { rows, rowCount } = await client.query<CartRow>(
+      `DELETE FROM carts WHERE id = $1 RETURNING *`,
+      [id],
+    );
+
+    if (rowCount === 0)
+      throw new NotFoundError('Cart not exist or maybe removed');
+
+    return this.toEntity(rows[0]);
   }
 }
