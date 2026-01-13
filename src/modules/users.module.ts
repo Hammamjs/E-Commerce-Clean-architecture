@@ -9,6 +9,8 @@ import { IUserRepository } from 'src/domain/repositories/user.repository.interfa
 import { PgUserRepository } from 'src/infrastructure/persistence/users/pg.user.repository';
 import { UserController } from 'src/interfaces/http/users.controller';
 import { DatabaseModule } from './Database.module';
+import { Pool } from 'pg';
+import { PG_CONNECTION } from 'src/infrastructure/database/pg-connection';
 
 @Module({
   controllers: [UserController],
@@ -27,10 +29,11 @@ import { DatabaseModule } from './Database.module';
     },
     {
       provide: 'IUserRepository',
-      useClass: PgUserRepository,
+      useFactory: (pool: Pool) => new PgUserRepository(pool),
+      inject: [PG_CONNECTION],
     },
   ],
-  exports: [UserFacade],
+  exports: [UserFacade, 'IUserRepository'],
   imports: [DatabaseModule],
 })
 export class UsersModule {}
