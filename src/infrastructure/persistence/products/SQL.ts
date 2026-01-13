@@ -20,4 +20,11 @@ export const SQL = {
   update: (toUpdate: string, idIndx: number) => `
      UPDATE products SET ${toUpdate} WHERE id = $${idIndx} RETURNING id, name, price, in_stock AS "inStock", created_at AS "createdAt"
      `,
+  dcreaseStock: `UPDATE products
+    SET in_stock = in_stock - $2
+    WHERE id = $1 AND in_stock >= $2
+    RETURNING in_stock
+    `,
+  increaseStock: `UPDATE products SET in_stock = in_stock + $2 WHERE id = $1 RETURNING in_stock AS "inStock"`,
+  delete: `DELETE FROM products WHERE id = $1 RETURNING *`,
 };

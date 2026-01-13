@@ -10,5 +10,5 @@ export interface IProductRepository {
     productId: string,
     quantity: number,
   ): Promise<{ inStock: number }>;
-  decreaseStockWitTx(productId: string, quantity: number): Promise<void>;
+  decreaseStockWitTx(productId: string, quantity: number): Promise<Products>;
 }
