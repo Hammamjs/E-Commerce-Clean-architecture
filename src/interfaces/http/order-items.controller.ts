@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -18,6 +19,7 @@ import { UpdateOrderItemStatusCommand } from 'src/application/command/order-item
 import { FindItemQuery } from 'src/application/queries/order-items/find-item.query';
 import { OrderResponse } from '../dto/orderDto/order-response';
 import { Orders } from 'src/domain/entities/orders.entity';
+import { UpdateOrderItemDto } from '../dto/Order-itemDto/update-order-items';
 
 @Controller('order-items')
 export class OrderItemsController {
@@ -30,7 +32,7 @@ export class OrderItemsController {
     );
     if (!item)
       throw new NotFoundException(`Item with this id: ${itemId} not found`);
-    return this.toOrderResponse(item);
+    return this._toOrderItemResponse(item);
   }
 
   @Get('user/:userId')
@@ -56,10 +58,21 @@ export class OrderItemsController {
     if (!updatedItem)
       throw new InternalServerErrorException('Update status failed');
 
-    return this.toOrderResponse(updatedItem);
+    return updatedItem;
   }
 
-  private toOrderResponse(item: OrderItem): OrderItemsResponse {
+  @Patch('update-status')
+  async updateStatus(@Body() item: UpdateOrderItemDto) {
+    console.log(item);
+    if (!item.id || !item.status)
+      throw new BadRequestException('Invalid input');
+
+    const command = new UpdateOrderItemStatusCommand(item.id, item.status);
+    const orderItem = await this._orderItem.updateStatus.execute(command);
+    return this._toOrderItemResponse(orderItem);
+  }
+
+  private _toOrderItemResponse(item: OrderItem): OrderItemsResponse {
     return new OrderItemsResponse(
       item.id,
       item.orderId,
@@ -77,7 +90,7 @@ export class OrderItemsController {
       items: items
         .filter((i) => i.orderId === order.id)
         .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
-        .map((i) => this.toOrderResponse(i)),
+        .map((i) => this._toOrderItemResponse(i)),
     }));
   }
 }

@@ -23,7 +23,6 @@ export class UserController {
   @Get()
   async findAll() {
     const users = await this.user.findAll.execute();
-    console.log(users);
     return users.map((user) => new UserDto(user));
   }
 
