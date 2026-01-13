@@ -4,7 +4,10 @@ import { IUseCase } from '../base.use-case';
 import { CreateUserCommand } from 'src/application/command/users/create-user.command';
 import { ForbiddenError } from 'src/application/errors/forbidden.error';
 
-export class CreateUserUseCase implements IUseCase<CreateUserCommand, User> {
+export class CreateUserUseCase implements IUseCase<
+  CreateUserCommand,
+  User | null
+> {
   constructor(private _userRepository: IUserRepository) {}
 
   async execute(command: CreateUserCommand) {
@@ -13,6 +16,6 @@ export class CreateUserUseCase implements IUseCase<CreateUserCommand, User> {
 
     const newUser = new User(command.fullName, command.email);
 
-    return await this._userRepository.save(newUser);
+    return await this._userRepository.create(newUser);
   }
 }

@@ -19,9 +19,9 @@ export class AddCartItemUseCase implements IUseCase<
     private readonly _productRepo: IProductRepository,
   ) {}
   async execute(command: AddCartItemCommand): Promise<CartItems> {
-    return await this._uow.runInTransaction(async (context) => {
+    return await this._uow.runInTransaction(async () => {
       // create cart if not exists
-      const cart = await this._cartRepo.createCart(context, command.userId);
+      const cart = await this._cartRepo.create(command.userId);
 
       if (!cart || !cart.id) throw new InternalServerError();
 
@@ -46,7 +46,7 @@ export class AddCartItemUseCase implements IUseCase<
         total,
       );
 
-      return await this._cartItemRepository.addItem(context, cartItem);
+      return await this._cartItemRepository.addItem(cartItem);
     });
   }
 }

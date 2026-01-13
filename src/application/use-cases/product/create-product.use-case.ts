@@ -5,12 +5,12 @@ import { IProductRepository } from 'src/domain/repositories/product.repository.i
 
 export class CreateProductUseCase implements IUseCase<
   CreateProductInput,
-  Products
+  Products | null
 > {
   constructor(private productRepository: IProductRepository) {}
 
-  async execute(data: CreateProductInput): Promise<Products> {
+  async execute(data: CreateProductInput): Promise<Products | null> {
     const product = new Products(data.name, data.price, data.inStock);
-    return await this.productRepository.save(product);
+    return this.productRepository.create(product);
   }
 }
