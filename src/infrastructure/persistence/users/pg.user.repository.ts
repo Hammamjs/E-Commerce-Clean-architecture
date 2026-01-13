@@ -3,12 +3,15 @@ import { User } from 'src/domain/entities/user.entity';
 import { Pool } from 'pg';
 import { UserRow } from './user.row';
 import { SQL } from './SQL';
-import { NotFoundError } from 'src/application/errors/not-found.error';
+import { HelperQuery } from '../shared/helper-query';
 
 export class PgUserRepository implements IUserRepository {
-  constructor(private readonly _conn: Pool) {}
+  constructor(
+    private readonly _conn: Pool,
+    private readonly _helperQuery: HelperQuery,
+  ) {}
 
-  private _columnMap = {
+  private readonly _columnMap = {
     fullName: 'full_name',
     email: 'email',
   };
@@ -33,37 +36,31 @@ export class PgUserRepository implements IUserRepository {
     return this._toEntity(rows[0]);
   }
 
-  async create(user: User): Promise<User | null> {
-    const entries = this.validation(user);
-    console.log('wrok');
-    if (!entries.length) return null;
-
-    const fields = entries.map(([k]) => `${this._columnMap[k]}`).join(', ');
-    const fieldsCount = entries.map((item, i) => `$${i + 1}`).join(', ');
-    const values = entries.map(([, v]) => v as string);
+  async create(user: User): Promise<User> {
+    const { toUpdate, toUpdateSignature, values } = this._helperQuery.create(
+      user,
+      this._allowedColumns,
+      this._columnMap,
+    );
 
     const { rows } = await this._conn.query<UserRow>(
-      SQL.create(fields, fieldsCount),
+      SQL.create(toUpdate, toUpdateSignature),
       values,
     );
     return this._toEntity(rows[0]);
   }
 
-  async update(user: User): Promise<User | null> {
-    const entries = this.validation(user);
-    if (!entries.length) return null;
-
-    const fieldsToUpdate = entries
-      .map(([k], i) => `${this._columnMap[k]}=$${i + 1}`) // we need to make data match db
-      .join(', ');
-    const values = entries.map(([, v]) => v as string);
-
-    const { rows, rowCount } = await this._conn.query<UserRow>(
-      SQL.update(fieldsToUpdate, values.length),
-      [...values, user.id],
+  async update(user: User): Promise<User> {
+    const { toUpdate, values } = this._helperQuery.update(
+      user,
+      this._allowedColumns,
+      this._columnMap,
     );
 
-    if (rowCount === 0) return null;
+    const { rows } = await this._conn.query<UserRow>(
+      SQL.update(toUpdate, values.length + 1),
+      [...values, user.id],
+    );
 
     return this._toEntity(rows[0]);
   }
