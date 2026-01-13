@@ -4,3 +4,4 @@ export const CART_ITEMS_REPO = Symbol('CART_ITEMS_REPO');
 export const ORDER_REPO = Symbol('ORDER_REPO');
 export const ORDER_ITEMS_REPO = Symbol('ORDER_ITEMS_REPO');
 export const USERS_REPO = Symbol('USERS_REPO');
+export const UNIT_OF_WORK = Symbol('UNIT_OF_WORK');

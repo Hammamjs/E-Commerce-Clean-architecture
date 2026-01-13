@@ -1,5 +1,5 @@
 import { InvalidTransitionStatusError } from 'src/application/errors/Invalid-status-transition.error';
-import { ItemStatus } from 'src/interfaces/dto/Order-itemDto/order-items-status';
+import { ItemStatus } from '../enums/order-item-status.enum';
 
 export class OrderItem {
   // allowed transition
