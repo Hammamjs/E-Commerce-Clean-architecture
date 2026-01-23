@@ -5,7 +5,7 @@ export interface IProductRepository {
   findAll(): Promise<Products[]>;
   create(product: Products): Promise<Products | null>;
   update(product: Products): Promise<Products | null>;
-  deleteProduct(productId: string): Promise<Products | null>;
+  delete(productId: string): Promise<Products | null>;
   increaseStockWitTx(
     productId: string,
     quantity: number,
