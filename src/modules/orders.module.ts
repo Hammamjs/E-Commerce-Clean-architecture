@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { CreateOrderUseCase } from 'src/application/use-cases/order/create-order.use-case';
 import { DeleteOrderUseCase } from 'src/application/use-cases/order/delete-order.use-case';
 import { FindUserOrderUseCase } from 'src/application/use-cases/order/find-user-order.use-case';
 import { FindUserOrdersUseCase } from 'src/application/use-cases/order/find-user-orders.use-case';
@@ -9,6 +8,8 @@ import { IOrdersRepository } from 'src/domain/repositories/order.repository.inte
 import { PgOrdersRepository } from 'src/infrastructure/persistence/order/pg.orders.repository';
 import { OrdersController } from 'src/interfaces/http/orders.controller';
 import { DatabaseModule } from './Database.module';
+import { Pool } from 'pg';
+import { PG_CONNECTION } from 'src/infrastructure/database/pg-connection';
 
 @Module({
   controllers: [OrdersController],
@@ -17,7 +18,6 @@ import { DatabaseModule } from './Database.module';
       provide: OrderFacade,
       useFactory: (repo: IOrdersRepository) =>
         new OrderFacade(
-          new CreateOrderUseCase(repo),
           new UpdateOrderUseCase(repo),
           new FindUserOrdersUseCase(repo),
           new FindUserOrderUseCase(repo),
@@ -27,10 +27,11 @@ import { DatabaseModule } from './Database.module';
     },
     {
       provide: 'IOrdersRepository',
-      useClass: PgOrdersRepository,
+      useFactory: (pool: Pool) => new PgOrdersRepository(pool),
+      inject: [PG_CONNECTION],
     },
   ],
-  exports: [OrderFacade],
+  exports: ['IOrdersRepository', OrderFacade],
   imports: [DatabaseModule],
 })
 export class OrdersModule {}

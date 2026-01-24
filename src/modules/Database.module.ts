@@ -20,6 +20,5 @@ import { PG_CONNECTION } from 'src/infrastructure/database/pg-connection';
     },
   ],
   exports: [PG_CONNECTION],
-  imports: [DatabaseModule],
 })
 export class DatabaseModule {}

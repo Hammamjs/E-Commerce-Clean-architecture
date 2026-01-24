@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { CreateOrderFromCartUseCase } from 'src/application/use-cases/order-items/create-order-from-cart.use-case';
 import { FindItemUseCase } from 'src/application/use-cases/order-items/find-item.use-case';
 import { FindUserOrderItemsUseCase } from 'src/application/use-cases/order-items/find-user-orders.use-case';
 import { OrderItemFacade } from 'src/application/use-cases/order-items/order-item.facade';
@@ -9,7 +8,9 @@ import { PgOrderItemRepository } from 'src/infrastructure/persistence/order-item
 import { OrderItemsController } from 'src/interfaces/http/order-items.controller';
 import { DatabaseModule } from './Database.module';
 import { IOrdersRepository } from 'src/domain/repositories/order.repository.interface';
-import { PgOrdersRepository } from 'src/infrastructure/persistence/order/pg.orders.repository';
+import { Pool } from 'pg';
+import { PG_CONNECTION } from 'src/infrastructure/database/pg-connection';
+import { OrdersModule } from './orders.module';
 
 @Module({
   controllers: [OrderItemsController],
@@ -20,30 +21,22 @@ import { PgOrdersRepository } from 'src/infrastructure/persistence/order/pg.orde
         repo: IOrderItemsRepository,
         oderRepo: IOrdersRepository,
       ) => {
-        const create = new CreateOrderFromCartUseCase(repo);
         const updateStatus = new UpdateOrderItemStatusUseCase(repo);
         const findUserItems = new FindUserOrderItemsUseCase(repo, oderRepo);
         const findItem = new FindItemUseCase(repo);
 
-        return new OrderItemFacade(
-          findItem,
-          findUserItems,
-          create,
-          updateStatus,
-        );
+        return new OrderItemFacade(findItem, findUserItems, updateStatus);
       },
       inject: ['IOrderItemsRepository', 'IOrdersRepository'],
     },
+
     {
       provide: 'IOrderItemsRepository',
-      useClass: PgOrderItemRepository,
-    },
-    {
-      provide: 'IOrdersRepository',
-      useClass: PgOrdersRepository,
+      useFactory: (pool: Pool) => new PgOrderItemRepository(pool),
+      inject: [PG_CONNECTION],
     },
   ],
   exports: [OrderItemFacade],
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, OrdersModule],
 })
 export class OrderItemsModule {}
