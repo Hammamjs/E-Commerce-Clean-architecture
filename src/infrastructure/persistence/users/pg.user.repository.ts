@@ -4,6 +4,7 @@ import { Pool } from 'pg';
 import { UserRow } from './user.row';
 import { SQL } from './SQL';
 import { HelperQuery } from '../shared/helper-query';
+import { NotFoundError } from 'src/application/errors/not-found.error';
 
 export class PgUserRepository implements IUserRepository {
   constructor(
@@ -36,7 +37,7 @@ export class PgUserRepository implements IUserRepository {
     return this._toEntity(rows[0]);
   }
 
-  async create(user: User): Promise<User | null> {
+  async create(user: User): Promise<User> {
     const { toUpdate, toUpdateSignature, values } = this._helperQuery.create(
       user,
       this._allowedColumns,
@@ -50,7 +51,7 @@ export class PgUserRepository implements IUserRepository {
     return this._toEntity(rows[0]);
   }
 
-  async update(user: User): Promise<User | null> {
+  async update(user: User): Promise<User> {
     const { toUpdate, values } = this._helperQuery.update(
       user,
       this._allowedColumns,
@@ -62,7 +63,7 @@ export class PgUserRepository implements IUserRepository {
       [...values, user.id],
     );
 
-    if (rowCount === 0) return null;
+    if (rowCount === 0) throw new NotFoundError('User not found');
 
     return this._toEntity(rows[0]);
   }

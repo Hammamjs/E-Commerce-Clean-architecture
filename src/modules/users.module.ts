@@ -11,6 +11,7 @@ import { UserController } from 'src/interfaces/http/users.controller';
 import { DatabaseModule } from './Database.module';
 import { Pool } from 'pg';
 import { PG_CONNECTION } from 'src/infrastructure/database/pg-connection';
+import { HelperQuery } from 'src/infrastructure/persistence/shared/helper-query';
 
 @Module({
   controllers: [UserController],
@@ -29,7 +30,7 @@ import { PG_CONNECTION } from 'src/infrastructure/database/pg-connection';
     },
     {
       provide: 'IUserRepository',
-      useFactory: (pool: Pool) => new PgUserRepository(pool),
+      useFactory: (pool: Pool, helperQuery: HelperQuery) => new PgUserRepository(pool, helperQuery),
       inject: [PG_CONNECTION],
     },
   ],

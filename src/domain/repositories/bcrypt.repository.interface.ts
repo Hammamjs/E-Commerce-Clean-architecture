@@ -1,4 +1,4 @@
-export interface IBcryptRepository {
-  hashPassword(password: string): Promise<string>;
-  comaprePassword(plaintext: string, hashedPassword: string): Promise<string>;
+export interface IBcryptService {
+ hashPassword(password: string): Promise<string>;
+ comparePassword(plaintext: string, hashedPassword: string): Promise<boolean>;
 }

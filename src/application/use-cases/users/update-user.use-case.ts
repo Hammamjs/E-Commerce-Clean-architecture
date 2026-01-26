@@ -16,6 +16,6 @@ export class UpdateUserUseCase implements IUseCase<UpdateUserCommand, User> {
     if (command.email) user.changeEmail(command.email);
     if (command.fullName) user.changeName(command.fullName);
 
-    return await this.userRepository.save(user);
+    return await this.userRepository.update(user);
   }
 }

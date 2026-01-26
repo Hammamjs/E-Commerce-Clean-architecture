@@ -11,7 +11,7 @@ export class DecreaseProductStockUseCase implements IUseCase<
 
   async execute(data: DecreaseType): Promise<Products> {
     const { productId, quantity } = data;
-    const product = await this.productsRepository.decreaseStock(
+    const product = await this.productsRepository.decreaseStockWithTx(
       productId,
       quantity,
     );

@@ -18,6 +18,6 @@ export class CheckoutCartUseCase implements IUseCase<
       cart.checkout();
     }
 
-    return this.cartRepository.updateCart(cart);
+    return this.cartRepository.update(cart);
   }
 }

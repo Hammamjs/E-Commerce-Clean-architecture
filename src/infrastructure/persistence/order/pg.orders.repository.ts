@@ -5,6 +5,7 @@ import { Status } from 'src/domain/enums/order-status.enum';
 import { OrderRow } from './order.row';
 import { SQL } from './SQL';
 import { asyncContext, AsyncContext } from '../async-context/async-context';
+import { NotFoundError } from 'src/application/errors/not-found.error';
 
 export class PgOrdersRepository implements IOrdersRepository {
   constructor(
@@ -53,7 +54,7 @@ export class PgOrdersRepository implements IOrdersRepository {
     return this.toEntity(rows[0]);
   }
 
-  async createOrder(userId: string, total: number): Promise<Orders | null> {
+  async createOrder(userId: string, total: number): Promise<Orders> {
     const client = this._getClient();
     const { rows } = await client.query<OrderRow>(SQL.create, [userId, total]);
 
@@ -77,11 +78,11 @@ export class PgOrdersRepository implements IOrdersRepository {
     return this.toEntity(rows[0]);
   }
 
-  async deleteOrder(id: string): Promise<Orders | null> {
+  async deleteOrder(id: string): Promise<Orders> {
     const client = this._getClient();
     const { rows, rowCount } = await client.query<OrderRow>(SQL.delete, [id]);
 
-    if (rowCount === 0) return null;
+    if (rowCount === 0) throw new NotFoundError('Order not found');
 
     return this.toEntity(rows[0]);
   }

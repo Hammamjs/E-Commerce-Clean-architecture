@@ -11,6 +11,7 @@ export class CreateProductUseCase implements IUseCase<
 
   async execute(data: CreateProductInput): Promise<Products> {
     const product = new Products(data.name, data.price, data.inStock);
-    return await this.productRepository.save(product);
+    if (!product) throw new Error('Product not created');
+    return await this.productRepository.create(product);
   }
 }

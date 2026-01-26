@@ -13,6 +13,6 @@ export class UpdateOrderItemStatusUseCase implements IUseCase<
 
     item.changeStatus(command.newStatus);
 
-    return await this.orderItemRepository.save(item);
+    return await this.orderItemRepository.update(item);
   }
 }

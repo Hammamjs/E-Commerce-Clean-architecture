@@ -18,42 +18,42 @@ import { UnitOfWorkModule } from './unit-of-work.module';
 import { AsyncContext } from 'src/infrastructure/persistence/async-context/async-context';
 
 @Module({
-  controllers: [CartItemsController],
-  providers: [
-    {
-      provide: CartItemsFacade,
-      useFactory: (
-        repo: ICartItemsRepository,
-        cartRepo: ICartRepository,
-        uowRepo: IUnitOfWork,
-        productRepo: IProductRepository,
-      ) =>
-        new CartItemsFacade(
-          new RemoveCartItemUseCase(repo, cartRepo),
-          new AddCartItemUseCase(repo, cartRepo, uowRepo, productRepo),
-          new FindAllCartItemsUseCase(repo),
-        ),
-      inject: [
-        'ICartItemsRepository',
-        'ICartRepository',
-        'IUnitOfWork',
-        'IProductRepository',
-      ],
-    },
-    {
-      provide: 'ICartItemsRepository',
-      useFactory: (pool: Pool, asyncCtx: AsyncContext) =>
-        new PgCartItemsReposiory(pool, asyncCtx),
-      inject: [PG_CONNECTION],
-    },
-  ],
-  exports: ['ICartItemsRepository', CartItemsFacade],
-  // fix circular imports
-  imports: [
-    DatabaseModule,
-    forwardRef(() => CartModule),
-    forwardRef(() => ProductsModule),
-    forwardRef(() => UnitOfWorkModule),
-  ],
+ controllers: [CartItemsController],
+ providers: [
+  {
+   provide: CartItemsFacade,
+   useFactory: (
+    repo: ICartItemsRepository,
+    cartRepo: ICartRepository,
+    uowRepo: IUnitOfWork,
+    productRepo: IProductRepository,
+   ) =>
+    new CartItemsFacade(
+     new RemoveCartItemUseCase(repo, cartRepo),
+     new AddCartItemUseCase(repo, cartRepo, uowRepo, productRepo),
+     new FindAllCartItemsUseCase(repo),
+    ),
+   inject: [
+    'ICartItemsRepository',
+    'ICartRepository',
+    'IUnitOfWork',
+    'IProductRepository',
+   ],
+  },
+  {
+   provide: 'ICartItemsRepository',
+   useFactory: (pool: Pool, asyncCtx: AsyncContext) =>
+    new PgCartItemsReposiory(pool, asyncCtx),
+   inject: [PG_CONNECTION],
+  },
+ ],
+ exports: ['ICartItemsRepository', CartItemsFacade],
+ // fix circular imports
+ imports: [
+  DatabaseModule,
+  forwardRef(() => CartModule),
+  forwardRef(() => ProductsModule),
+  forwardRef(() => UnitOfWorkModule),
+ ],
 })
-export class CartItemsModule {}
+export class CartItemsModule { }

@@ -13,6 +13,6 @@ export class CreateUserUseCase implements IUseCase<CreateUserCommand, User> {
 
     const newUser = new User(command.fullName, command.email);
 
-    return await this._userRepository.save(newUser);
+    return await this._userRepository.create(newUser);
   }
 }

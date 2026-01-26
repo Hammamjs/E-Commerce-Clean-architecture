@@ -7,6 +7,6 @@ export class DeleteCartUseCase implements IUseCase<string, Cart> {
   async execute(userId: string): Promise<Cart> {
     const cart = await this.cartRepository.findByUserId(userId);
     if (!cart) throw new Error('Cart not found');
-    return this.cartRepository.deleteById(cart.id!);
+    return this.cartRepository.delete(cart.id!);
   }
 }

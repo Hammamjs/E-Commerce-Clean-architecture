@@ -19,6 +19,6 @@ export class UpdateProductUseCase implements IUseCase<
     if (data.price !== undefined) product.setPrice(data.price);
     if (data.inStock !== undefined) product.setStock(data.inStock);
 
-    return await this.productRespository.save(product);
+    return await this.productRespository.update(product);
   }
 }

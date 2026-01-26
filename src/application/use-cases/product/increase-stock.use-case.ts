@@ -12,7 +12,7 @@ export class IncreaseProductStockUseCase implements IUseCase<
   constructor(private productsRepository: IProductRepository) {}
   async execute(data: IncreaseType): Promise<Products> {
     const { productId, quantity } = data;
-    const product = await this.productsRepository.increaseStock(
+    const product = await this.productsRepository.increaseStockWithTx(
       productId,
       quantity,
     );

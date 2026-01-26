@@ -11,6 +11,7 @@ import { IncreaseProductStockUseCase } from 'src/application/use-cases/product/i
 import { DeleteProductUseCase } from 'src/application/use-cases/product/delete-product.use-case';
 import { DatabaseModule } from './Database.module';
 import { IUnitOfWork } from 'src/domain/repositories/unit-of-work.repository.interface';
+import { DecreaseProductStockUseCase } from 'src/application/use-cases/product/decrease-stock.use-case';
 
 @Module({
   controllers: [ProductsController],
@@ -22,7 +23,8 @@ import { IUnitOfWork } from 'src/domain/repositories/unit-of-work.repository.int
         const findProducts = new FindProductsUseCase(repo);
         const create = new CreateProductUseCase(repo);
         const update = new UpdateProductUseCase(repo);
-        const increaseStock = new IncreaseProductStockUseCase(repo, uowRepo);
+        const increaseStock = new IncreaseProductStockUseCase(repo);
+        const decreaseStock = new DecreaseProductStockUseCase(repo);
         const deleteProduct = new DeleteProductUseCase(repo);
 
         return new ProductsFacade(
@@ -31,6 +33,7 @@ import { IUnitOfWork } from 'src/domain/repositories/unit-of-work.repository.int
           findProduct,
           findProducts,
           increaseStock,
+          decreaseStock,
           deleteProduct,
         );
       },

@@ -2,7 +2,6 @@ import { IProductRepository } from 'src/domain/repositories/product.repository.i
 import { Pool, PoolClient } from 'pg';
 import { Products } from 'src/domain/entities/products.entity';
 import { asyncContext, AsyncContext } from '../async-context/async-context';
-import { InsufficientQuantityError } from 'src/application/errors/insufficient.error';
 import { SQL } from './SQL';
 import { ProductRow } from './product.row';
 import { HelperQuery } from '../shared/helper-query';
@@ -51,20 +50,20 @@ export class PgProductsRepository implements IProductRepository {
     return this._toEntity(rows[0]);
   }
 
-  async increaseStockWitTx(
+  async increaseStockWithTx(
     productId: string,
     quantity: number,
-  ): Promise<{ inStock: number }> {
+  ): Promise<Products> {
     const client = this._getClient();
-    const { rows } = await client.query<{ inStock: number }>(
+    const { rows } = await client.query<ProductRow>(
       SQL.increaseStock,
       [productId, quantity],
     );
 
-    return rows[0];
+    return this._toEntity(rows[0]);
   }
 
-  async decreaseStockWitTx(
+  async decreaseStockWithTx(
     productId: string,
     quantity: number,
   ): Promise<Products> {
@@ -77,7 +76,7 @@ export class PgProductsRepository implements IProductRepository {
     return this._toEntity(product[0]);
   }
 
-  async create(product: Products): Promise<Products | null> {
+  async create(product: Products): Promise<Products> {
     const { toUpdate, toUpdateSignature, values } = this._helperQuery.create(
       product,
       this._allowedColumns,
@@ -93,7 +92,7 @@ export class PgProductsRepository implements IProductRepository {
     return this._toEntity(rows[0]);
   }
 
-  async update(product: Products): Promise<Products | null> {
+  async update(product: Products): Promise<Products> {
     const { toUpdate, values } = this._helperQuery.update(
       product,
       this._allowedColumns,
@@ -111,7 +110,7 @@ export class PgProductsRepository implements IProductRepository {
     return this._toEntity(rows[0]);
   }
 
-  async deleteProduct(id: string): Promise<Products | null> {
+  async delete(id: string): Promise<Products> {
     const client = this._getClient();
 
     const { rows } = await client.query<ProductRow>(SQL.delete, [id]);

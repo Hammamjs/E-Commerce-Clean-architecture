@@ -10,6 +10,6 @@ export class DeleteProductUseCase implements IUseCase<string, Products> {
     const product = await this.productRepository.findProduct(productId);
     if (!product) throw new NotFoundException('Product not exists');
 
-    return await this.productRepository.deleteProduct(productId);
+    return await this.productRepository.delete(productId);
   }
 }

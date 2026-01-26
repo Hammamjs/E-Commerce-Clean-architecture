@@ -6,8 +6,8 @@ type OrderOrNull = Orders | null;
 export interface IOrdersRepository {
   findById(orderId: string): Promise<OrderOrNull>;
   findAll(userId: string): Promise<Orders[]>;
-  createOrder(userId: string, total: number): Promise<OrderOrNull>;
-  deleteOrder(orderId: string): Promise<OrderOrNull>;
+  createOrder(userId: string, total: number): Promise<Orders>;
+  deleteOrder(orderId: string): Promise<Orders>;
   updateOrderStatus(
     userId: string,
     orderId: string,

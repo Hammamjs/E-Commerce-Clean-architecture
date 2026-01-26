@@ -64,7 +64,7 @@ export class CheckOutUseCase implements IUseCase<
           `Insuffiecent stock for ${product.name} only available last ${product.getInStock()} items`,
         );
       // decrease product stock
-      await this._productRepo.decreaseStock(item.productId, item.getQuantity());
+      await this._productRepo.decreaseStockWithTx(item.productId, item.getQuantity());
       total += item.getTotal();
     }
     // create order
@@ -80,7 +80,7 @@ export class CheckOutUseCase implements IUseCase<
     }
 
     // this operation occur when order created successfully
-    await this._cartRep.deleteById(cart.id);
+    await this._cartRep.delete(cart.id);
 
     // return order
     return {

@@ -79,7 +79,7 @@ export class PgCartRepository implements ICartRepository {
     return this.toEntity(rows[0]);
   }
 
-  async delete(id: string): Promise<Cart | null> {
+  async delete(id: string): Promise<Cart> {
     const client = this._getClient();
     const { rows, rowCount } = await client.query<CartRow>(
       `DELETE FROM carts WHERE id = $1 RETURNING *`,

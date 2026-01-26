@@ -28,6 +28,7 @@ import { PgUnitOfWork } from 'src/infrastructure/persistence/unit-of-work/pg.uni
 import { IUnitOfWork } from 'src/domain/repositories/unit-of-work.repository.interface';
 import { PgCartRepository } from 'src/infrastructure/persistence/cart/pg.cart.repository';
 import { AsyncContext } from 'src/infrastructure/persistence/async-context/async-context';
+import { HelperQuery } from 'src/infrastructure/persistence/shared/helper-query';
 
 @Module({
   imports: [DatabaseModule],
@@ -52,13 +53,13 @@ import { AsyncContext } from 'src/infrastructure/persistence/async-context/async
     },
     {
       provide: PRODUCT_REPO,
-      useFactory: (pool: Pool, asyncCtx: AsyncContext) =>
-        new PgProductsRepository(pool, asyncCtx),
+      useFactory: (pool: Pool, asyncCtx: AsyncContext, helperQuery: HelperQuery) =>
+        new PgProductsRepository(pool, asyncCtx, helperQuery),
       inject: [PG_CONNECTION],
     },
     {
       provide: USERS_REPO,
-      useFactory: (pool: Pool) => new PgUserRepository(pool),
+      useFactory: (pool: Pool, helperQuery: HelperQuery) => new PgUserRepository(pool, helperQuery),
       inject: [PG_CONNECTION],
     },
     {
@@ -91,7 +92,6 @@ import { AsyncContext } from 'src/infrastructure/persistence/async-context/async
           orderRepo,
           orderItemRepo,
           productRepo,
-          uowRepo,
         ),
       inject: [
         CART_REPO,
@@ -100,7 +100,6 @@ import { AsyncContext } from 'src/infrastructure/persistence/async-context/async
         ORDER_REPO,
         ORDER_ITEMS_REPO,
         PRODUCT_REPO,
-        UNIT_OF_WORK,
       ],
     },
   ],
