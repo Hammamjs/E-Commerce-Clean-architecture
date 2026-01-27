@@ -10,38 +10,40 @@ import { UpdateProductUseCase } from 'src/application/use-cases/product/update-p
 import { IncreaseProductStockUseCase } from 'src/application/use-cases/product/increase-stock.use-case';
 import { DeleteProductUseCase } from 'src/application/use-cases/product/delete-product.use-case';
 import { DatabaseModule } from './Database.module';
-import { IUnitOfWork } from 'src/domain/repositories/unit-of-work.repository.interface';
+import { DecreaseProductStockUseCase } from 'src/application/use-cases/product/decrease-stock.use-case';
 
 @Module({
-  controllers: [ProductsController],
-  providers: [
-    {
-      provide: ProductsFacade,
-      useFactory: (repo: IProductRepository, uowRepo: IUnitOfWork) => {
-        const findProduct = new FindProductUseCase(repo);
-        const findProducts = new FindProductsUseCase(repo);
-        const create = new CreateProductUseCase(repo);
-        const update = new UpdateProductUseCase(repo);
-        const increaseStock = new IncreaseProductStockUseCase(repo, uowRepo);
-        const deleteProduct = new DeleteProductUseCase(repo);
+ controllers: [ProductsController],
+ providers: [
+  {
+   provide: ProductsFacade,
+   useFactory: (repo: IProductRepository) => {
+    const findProduct = new FindProductUseCase(repo);
+    const findProducts = new FindProductsUseCase(repo);
+    const create = new CreateProductUseCase(repo);
+    const update = new UpdateProductUseCase(repo);
+    const increaseStock = new IncreaseProductStockUseCase(repo);
+    const decreaseStock = new DecreaseProductStockUseCase(repo);
+    const deleteProduct = new DeleteProductUseCase(repo);
 
-        return new ProductsFacade(
-          create,
-          update,
-          findProduct,
-          findProducts,
-          increaseStock,
-          deleteProduct,
-        );
-      },
-      inject: ['IProductRepository'],
-    },
-    {
-      provide: 'IProductRepository',
-      useClass: PgProductsRepository,
-    },
-  ],
-  exports: ['IProductRepository', ProductsFacade],
-  imports: [DatabaseModule],
+    return new ProductsFacade(
+     create,
+     update,
+     findProduct,
+     findProducts,
+     increaseStock,
+     decreaseStock,
+     deleteProduct,
+    );
+   },
+   inject: ['IProductRepository'],
+  },
+  {
+   provide: 'IProductRepository',
+   useClass: PgProductsRepository,
+  },
+ ],
+ exports: ['IProductRepository', ProductsFacade],
+ imports: [DatabaseModule],
 })
-export class ProductsModule {}
+export class ProductsModule { }

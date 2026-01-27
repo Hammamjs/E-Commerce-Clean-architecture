@@ -11,29 +11,30 @@ import { UserController } from 'src/interfaces/http/users.controller';
 import { DatabaseModule } from './Database.module';
 import { Pool } from 'pg';
 import { PG_CONNECTION } from 'src/infrastructure/database/pg-connection';
+import { HelperQuery } from 'src/infrastructure/persistence/shared/helper-query';
 
 @Module({
-  controllers: [UserController],
-  providers: [
-    {
-      provide: UserFacade,
-      useFactory: (repo: IUserRepository) =>
-        new UserFacade(
-          new CreateUserUseCase(repo),
-          new FindUsersUseCase(repo),
-          new FindUserUseCase(repo),
-          new UpdateUserUseCase(repo),
-          new DeleteUserUseCase(repo),
-        ),
-      inject: ['IUserRepository'],
-    },
-    {
-      provide: 'IUserRepository',
-      useFactory: (pool: Pool) => new PgUserRepository(pool),
-      inject: [PG_CONNECTION],
-    },
-  ],
-  exports: [UserFacade, 'IUserRepository'],
-  imports: [DatabaseModule],
+ controllers: [UserController],
+ providers: [
+  {
+   provide: UserFacade,
+   useFactory: (repo: IUserRepository) =>
+    new UserFacade(
+     new CreateUserUseCase(repo),
+     new FindUsersUseCase(repo),
+     new FindUserUseCase(repo),
+     new UpdateUserUseCase(repo),
+     new DeleteUserUseCase(repo),
+    ),
+   inject: ['IUserRepository'],
+  },
+  {
+   provide: 'IUserRepository',
+   useFactory: (pool: Pool, helperQuery: HelperQuery) => new PgUserRepository(pool, helperQuery),
+   inject: [PG_CONNECTION, HelperQuery],
+  },
+ ],
+ exports: [UserFacade, 'IUserRepository'],
+ imports: [DatabaseModule],
 })
-export class UsersModule {}
+export class UsersModule { }
