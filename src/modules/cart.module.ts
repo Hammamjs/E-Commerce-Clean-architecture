@@ -12,7 +12,7 @@ import { ICartItemsRepository } from 'src/domain/repositories/cart-items.resposi
 import { PG_CONNECTION } from 'src/infrastructure/database/pg-connection';
 import { Pool } from 'pg';
 import { AsyncContext } from 'src/infrastructure/persistence/async-context/async-context';
-import { DeleteCartUseCase } from 'src/application/use-cases/cart/delete-cart.use-case';
+
 
 @Module({
  controllers: [CartController],
@@ -35,8 +35,8 @@ import { DeleteCartUseCase } from 'src/application/use-cases/cart/delete-cart.us
      repo,
      cartItemRepo,
     );
-    const deleteCartUseCase = new DeleteCartUseCase(repo);
-    return new CartFacade(userCartWithItemsUseCase, cartCheckoutUseCase, findByIdUseCase, deleteCartUseCase);
+
+    return new CartFacade(userCartWithItemsUseCase, cartCheckoutUseCase, findByIdUseCase);
    },
    inject: ['ICartRepository', 'ICartItemsRepository'],
   },

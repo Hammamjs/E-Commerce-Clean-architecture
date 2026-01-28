@@ -10,7 +10,6 @@ import { OrdersController } from 'src/interfaces/http/orders.controller';
 import { DatabaseModule } from './Database.module';
 import { Pool } from 'pg';
 import { PG_CONNECTION } from 'src/infrastructure/database/pg-connection';
-import { CreateOrderUseCase } from 'src/application/use-cases/order/create-order.use-case';
 
 @Module({
  controllers: [OrdersController],
@@ -19,7 +18,6 @@ import { CreateOrderUseCase } from 'src/application/use-cases/order/create-order
    provide: OrderFacade,
    useFactory: (repo: IOrdersRepository) =>
     new OrderFacade(
-     new CreateOrderUseCase(repo),
      new UpdateOrderUseCase(repo),
      new FindUserOrdersUseCase(repo),
      new FindUserOrderUseCase(repo),
