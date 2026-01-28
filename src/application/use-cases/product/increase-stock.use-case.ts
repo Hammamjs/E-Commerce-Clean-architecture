@@ -6,25 +6,25 @@ import { IUnitOfWork } from 'src/domain/repositories/unit-of-work.repository.int
 type IncreaseType = { productId: string; quantity: number };
 type InStock = { inStock: number };
 export class IncreaseProductStockUseCase implements IUseCase<
-  IncreaseType,
-  InStock
+ IncreaseType,
+ InStock
 > {
-  constructor(
-    private _productsRepository: IProductRepository,
-    private _uowRepo: IUnitOfWork,
-  ) {}
-  async execute(data: IncreaseType): Promise<InStock> {
-    return await this._uowRepo.runInTransaction(async () => {
-      const { productId, quantity } = data;
-      const product = await this._productsRepository.increaseStockWitTx(
-        productId,
-        quantity,
-      );
+ constructor(
+  private _productsRepository: IProductRepository,
+  private _uowRepo: IUnitOfWork,
+ ) { }
+ async execute(data: IncreaseType): Promise<InStock> {
+  return await this._uowRepo.runInTransaction(async () => {
+   const { productId, quantity } = data;
+   const product = await this._productsRepository.increaseStockWithTx(
+    productId,
+    quantity,
+   );
 
-      if (!product)
-        throw new NotFoundError('Product not found update value failed');
+   if (!product)
+    throw new NotFoundError('Product not found update value failed');
 
-      return product;
-    });
-  }
+   return product;
+  });
+ }
 }
