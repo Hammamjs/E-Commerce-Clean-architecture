@@ -3,10 +3,9 @@ import { Module } from "@nestjs/common";
 import { SignUpUseCase } from "src/application/use-cases/auth/sign-up.use-case";
 import { AuthFacade } from "src/application/use-cases/auth/auth.facade";
 import { IUserRepository } from "src/domain/repositories/user.repository.interface";
-import { ITokenService } from "src/domain/repositories/jwt-token.repository.interface";
-import { IBcryptService } from "src/domain/repositories/bcrypt.repository.interface";
-import { IRefreshTokenRepository } from "src/domain/repositories/refresh-token.interface";
-import { BCRYPT_SERVICE, REFRESH_TOKEN_REPO, TOKEN_SERVICE, USERS_REPO } from "src/domain/repositories/tokens.repositories";
+import { ITokenService } from "src/domain/service/jwt-token.repository.interface";
+import { IBcryptService } from "src/domain/service/bcrypt.service.interface";
+import { IRefreshTokenRepository } from "src/domain/repositories/refresh-token.repository.interface";
 import { DatabaseModule } from "./Database.module";
 import { PgUserRepository } from "src/infrastructure/persistence/users/pg.user.repository";
 import { TokenService } from "src/infrastructure/security/jwt-token/jwt-token.service";
@@ -15,6 +14,7 @@ import { Pool } from "pg";
 import { HelperQuery } from "src/infrastructure/persistence/shared/helper-query";
 import { BcryptService } from "src/infrastructure/security/bcrypt/bcrypt.service";
 import { PG_CONNECTION } from "src/infrastructure/database/pg-connection";
+import { BCRYPT_SERVICE, REFRESH_TOKEN_REPO, TOKEN_SERVICE, USERS_REPO } from "src/interfaces/di/tokens.di";
 
 @Module({
  controllers: [AuthController],
