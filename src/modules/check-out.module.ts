@@ -7,7 +7,7 @@ import {
  PRODUCT_REPO,
  UNIT_OF_WORK,
  USERS_REPO,
-} from 'src/domain/repositories/tokens.repositories';
+} from 'src/interfaces/di/tokens.di';
 import { CheckOutController } from 'src/interfaces/http/check-out.controller';
 import { DatabaseModule } from './Database.module';
 import { PgCartItemsReposiory } from 'src/infrastructure/persistence/cart-items/pg.cart-items.repository';
