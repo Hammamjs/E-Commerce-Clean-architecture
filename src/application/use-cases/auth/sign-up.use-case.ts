@@ -1,10 +1,10 @@
 import { IUseCase } from "../base.use-case";
 import { SignUpCommand } from "src/application/command/auth/sign-up.comand";
 import { User } from "src/domain/entities/user.entity";
-import { ITokenService } from "src/domain/repositories/jwt-token.repository.interface";
-import { IBcryptService } from "src/domain/repositories/bcrypt.repository.interface";
+import { ITokenService } from "src/domain/service/jwt-token.repository.interface";
+import { IBcryptService } from "src/domain/service/bcrypt.service.interface";
 import { IUserRepository } from "src/domain/repositories/user.repository.interface";
-import { IRefreshTokenRepository } from "src/domain/repositories/refresh-token.interface";
+import { IRefreshTokenRepository } from "src/domain/repositories/refresh-token.repository.interface";
 
 export class SignUpUseCase implements IUseCase<SignUpCommand, { user: User, accessToken: string }> {
  constructor(
