@@ -5,10 +5,10 @@ import { FindUserOrderByIdQuery } from 'src/application/queries/order/find-user-
 
 export class FindUserOrderUseCase implements IUseCase<
   FindUserOrderByIdQuery,
-  Orders
+  Orders | null
 > {
   constructor(private readonly _orderRepository: IOrdersRepository) {}
-  async execute(query: FindUserOrderByIdQuery): Promise<Orders> {
+  async execute(query: FindUserOrderByIdQuery): Promise<Orders | null> {
     const order = await this._orderRepository.findById(query.orderId);
     return order;
   }

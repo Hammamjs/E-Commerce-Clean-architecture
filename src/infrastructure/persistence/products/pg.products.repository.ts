@@ -103,10 +103,8 @@ export class PgProductsRepository implements IProductRepository {
     const client = this._getClient();
 
     const { rows } = await client.query<ProductRow>(
-      `
-       UPDATE products SET ${toUpdate} WHERE id = $${values.length + 1} RETURNING id, name, price, in_stock AS "inStock", created_at AS "createdAt"
-       `,
-      [...values, product.id],
+      SQL.createQuery(fields, fieldsCount),
+      values,
     );
     return this._toEntity(rows[0]);
   }

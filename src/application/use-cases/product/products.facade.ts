@@ -1,5 +1,4 @@
 import { CreateProductUseCase } from './create-product.use-case';
-import { DecreaseProductStockUseCase } from './decrease-stock.use-case';
 import { DeleteProductUseCase } from './delete-product.use-case';
 import { FindProductUseCase } from './find-product.use-case';
 import { FindProductsUseCase } from './find-products.use-case';
@@ -13,7 +12,6 @@ export class ProductsFacade {
     public findProduct: FindProductUseCase,
     public findProducts: FindProductsUseCase,
     public increaseStock: IncreaseProductStockUseCase,
-    public decreaseStock: DecreaseProductStockUseCase,
     public deleteProduct: DeleteProductUseCase,
   ) {}
 }

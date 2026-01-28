@@ -5,10 +5,10 @@ import { IOrdersRepository } from 'src/domain/repositories/order.repository.inte
 
 export class UpdateOrderUseCase implements IUseCase<
   UpdateOrderCommand,
-  Orders
+  Orders | null
 > {
   constructor(private orderRepository: IOrdersRepository) {}
-  async execute(command: UpdateOrderCommand): Promise<Orders> {
+  async execute(command: UpdateOrderCommand): Promise<Orders | null> {
     const { orderId, userId, status } = command;
     return await this.orderRepository.updateOrderStatus(
       userId,

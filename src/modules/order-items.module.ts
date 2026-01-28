@@ -11,32 +11,34 @@ import { IOrdersRepository } from 'src/domain/repositories/order.repository.inte
 import { Pool } from 'pg';
 import { PG_CONNECTION } from 'src/infrastructure/database/pg-connection';
 import { OrdersModule } from './orders.module';
+import { CreateOrderFromCartUseCase } from 'src/application/use-cases/order-items/create-order-from-cart.use-case';
 
 @Module({
-  controllers: [OrderItemsController],
-  providers: [
-    {
-      provide: OrderItemFacade,
-      useFactory: (
-        repo: IOrderItemsRepository,
-        oderRepo: IOrdersRepository,
-      ) => {
-        const updateStatus = new UpdateOrderItemStatusUseCase(repo);
-        const findUserItems = new FindUserOrderItemsUseCase(repo, oderRepo);
-        const findItem = new FindItemUseCase(repo);
+ controllers: [OrderItemsController],
+ providers: [
+  {
+   provide: OrderItemFacade,
+   useFactory: (
+    repo: IOrderItemsRepository,
+    oderRepo: IOrdersRepository,
+   ) => {
+    const updateStatusUseCase = new UpdateOrderItemStatusUseCase(repo);
+    const findUserItemsUseCase = new FindUserOrderItemsUseCase(repo, oderRepo);
+    const findItemUseCase = new FindItemUseCase(repo);
+    const createOrderItemUseCase = new CreateOrderFromCartUseCase(repo);
 
-        return new OrderItemFacade(findItem, findUserItems, updateStatus);
-      },
-      inject: ['IOrderItemsRepository', 'IOrdersRepository'],
-    },
+    return new OrderItemFacade(findItemUseCase, findUserItemsUseCase, createOrderItemUseCase, updateStatusUseCase);
+   },
+   inject: ['IOrderItemsRepository', 'IOrdersRepository'],
+  },
 
-    {
-      provide: 'IOrderItemsRepository',
-      useFactory: (pool: Pool) => new PgOrderItemRepository(pool),
-      inject: [PG_CONNECTION],
-    },
-  ],
-  exports: [OrderItemFacade],
-  imports: [DatabaseModule, OrdersModule],
+  {
+   provide: 'IOrderItemsRepository',
+   useFactory: (pool: Pool) => new PgOrderItemRepository(pool),
+   inject: [PG_CONNECTION],
+  },
+ ],
+ exports: [OrderItemFacade],
+ imports: [DatabaseModule, OrdersModule],
 })
-export class OrderItemsModule {}
+export class OrderItemsModule { }
