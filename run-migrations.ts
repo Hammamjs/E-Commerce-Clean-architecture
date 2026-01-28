@@ -1,7 +1,7 @@
-import {runner} from 'node-pg-migrate'
-import config from './src/infrastructure/database/migration.config.ts';
+import { runner } from 'node-pg-migrate'
+import config from './src/infrastructure/database/migrations/migration.config.js';
 
-async function run () {
+async function run() {
  console.log("🚀 Starting migrations...")
  try {
   await runner({
