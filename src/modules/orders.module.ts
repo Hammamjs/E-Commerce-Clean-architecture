@@ -10,28 +10,30 @@ import { OrdersController } from 'src/interfaces/http/orders.controller';
 import { DatabaseModule } from './Database.module';
 import { Pool } from 'pg';
 import { PG_CONNECTION } from 'src/infrastructure/database/pg-connection';
+import { CreateOrderUseCase } from 'src/application/use-cases/order/create-order.use-case';
 
 @Module({
-  controllers: [OrdersController],
-  providers: [
-    {
-      provide: OrderFacade,
-      useFactory: (repo: IOrdersRepository) =>
-        new OrderFacade(
-          new UpdateOrderUseCase(repo),
-          new FindUserOrdersUseCase(repo),
-          new FindUserOrderUseCase(repo),
-          new DeleteOrderUseCase(repo),
-        ),
-      inject: ['IOrdersRepository'],
-    },
-    {
-      provide: 'IOrdersRepository',
-      useFactory: (pool: Pool) => new PgOrdersRepository(pool),
-      inject: [PG_CONNECTION],
-    },
-  ],
-  exports: ['IOrdersRepository', OrderFacade],
-  imports: [DatabaseModule],
+ controllers: [OrdersController],
+ providers: [
+  {
+   provide: OrderFacade,
+   useFactory: (repo: IOrdersRepository) =>
+    new OrderFacade(
+     new CreateOrderUseCase(repo),
+     new UpdateOrderUseCase(repo),
+     new FindUserOrdersUseCase(repo),
+     new FindUserOrderUseCase(repo),
+     new DeleteOrderUseCase(repo),
+    ),
+   inject: ['IOrdersRepository'],
+  },
+  {
+   provide: 'IOrdersRepository',
+   useFactory: (pool: Pool) => new PgOrdersRepository(pool),
+   inject: [PG_CONNECTION],
+  },
+ ],
+ exports: ['IOrdersRepository', OrderFacade],
+ imports: [DatabaseModule],
 })
-export class OrdersModule {}
+export class OrdersModule { }

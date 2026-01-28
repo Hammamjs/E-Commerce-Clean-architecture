@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import {
-  CART_ITEMS_REPO,
-  CART_REPO,
-  ORDER_ITEMS_REPO,
-  ORDER_REPO,
-  PRODUCT_REPO,
-  UNIT_OF_WORK,
-  USERS_REPO,
+ CART_ITEMS_REPO,
+ CART_REPO,
+ ORDER_ITEMS_REPO,
+ ORDER_REPO,
+ PRODUCT_REPO,
+ UNIT_OF_WORK,
+ USERS_REPO,
 } from 'src/domain/repositories/tokens.repositories';
 import { CheckOutController } from 'src/interfaces/http/check-out.controller';
 import { DatabaseModule } from './Database.module';
@@ -28,82 +28,80 @@ import { PgUnitOfWork } from 'src/infrastructure/persistence/unit-of-work/pg.uni
 import { IUnitOfWork } from 'src/domain/repositories/unit-of-work.repository.interface';
 import { PgCartRepository } from 'src/infrastructure/persistence/cart/pg.cart.repository';
 import { AsyncContext } from 'src/infrastructure/persistence/async-context/async-context';
+import { HelperQuery } from 'src/infrastructure/persistence/shared/helper-query';
 
 @Module({
-  imports: [DatabaseModule],
-  controllers: [CheckOutController],
-  providers: [
-    {
-      provide: CART_REPO,
-      useFactory: (pool: Pool) => new PgCartRepository(pool),
-      inject: [PG_CONNECTION],
-    },
-    {
-      provide: UNIT_OF_WORK,
-      useFactory: (pool: Pool, asyncCtx: AsyncContext) =>
-        new PgUnitOfWork(pool, asyncCtx),
-      inject: [PG_CONNECTION],
-    },
-    {
-      provide: CART_ITEMS_REPO,
-      useFactory: (pool: Pool, asyncCtx: AsyncContext) =>
-        new PgCartItemsReposiory(pool, asyncCtx),
-      inject: [PG_CONNECTION],
-    },
-    {
-      provide: PRODUCT_REPO,
-      useFactory: (pool: Pool, asyncCtx: AsyncContext) =>
-        new PgProductsRepository(pool, asyncCtx),
-      inject: [PG_CONNECTION],
-    },
-    {
-      provide: USERS_REPO,
-      useFactory: (pool: Pool) => new PgUserRepository(pool),
-      inject: [PG_CONNECTION],
-    },
-    {
-      provide: ORDER_REPO,
-      useFactory: (pool: Pool, asyncCtx: AsyncContext) =>
-        new PgOrdersRepository(pool, asyncCtx),
-      inject: [PG_CONNECTION],
-    },
-    {
-      provide: ORDER_ITEMS_REPO,
-      useFactory: (pool: Pool, asyncCtx: AsyncContext) =>
-        new PgOrderItemRepository(pool, asyncCtx),
-      inject: [PG_CONNECTION],
-    },
-    {
-      provide: CheckOutUseCase,
-      useFactory: (
-        cartRep: ICartRepository,
-        cartItemsRepo: ICartItemsRepository,
-        userRepo: IUserRepository,
-        orderRepo: IOrdersRepository,
-        orderItemRepo: IOrderItemsRepository,
-        productRepo: IProductRepository,
-        uowRepo: IUnitOfWork,
-      ) =>
-        new CheckOutUseCase(
-          cartRep,
-          cartItemsRepo,
-          userRepo,
-          orderRepo,
-          orderItemRepo,
-          productRepo,
-          uowRepo,
-        ),
-      inject: [
-        CART_REPO,
-        CART_ITEMS_REPO,
-        USERS_REPO,
-        ORDER_REPO,
-        ORDER_ITEMS_REPO,
-        PRODUCT_REPO,
-        UNIT_OF_WORK,
-      ],
-    },
-  ],
-  exports: [CheckOutUseCase],
+ imports: [DatabaseModule],
+ controllers: [CheckOutController],
+ providers: [
+  {
+   provide: CART_REPO,
+   useFactory: (pool: Pool) => new PgCartRepository(pool),
+   inject: [PG_CONNECTION],
+  },
+  {
+   provide: UNIT_OF_WORK,
+   useFactory: (pool: Pool, asyncCtx: AsyncContext) =>
+    new PgUnitOfWork(pool, asyncCtx),
+   inject: [PG_CONNECTION],
+  },
+  {
+   provide: CART_ITEMS_REPO,
+   useFactory: (pool: Pool, asyncCtx: AsyncContext) =>
+    new PgCartItemsReposiory(pool, asyncCtx),
+   inject: [PG_CONNECTION],
+  },
+  {
+   provide: PRODUCT_REPO,
+   useFactory: (pool: Pool, asyncCtx: AsyncContext, helperQuery: HelperQuery) =>
+    new PgProductsRepository(pool, asyncCtx, helperQuery),
+   inject: [PG_CONNECTION],
+  },
+  {
+   provide: USERS_REPO,
+   useFactory: (pool: Pool, helperQuery: HelperQuery) => new PgUserRepository(pool, helperQuery),
+   inject: [PG_CONNECTION],
+  },
+  {
+   provide: ORDER_REPO,
+   useFactory: (pool: Pool, asyncCtx: AsyncContext) =>
+    new PgOrdersRepository(pool, asyncCtx),
+   inject: [PG_CONNECTION],
+  },
+  {
+   provide: ORDER_ITEMS_REPO,
+   useFactory: (pool: Pool, asyncCtx: AsyncContext) =>
+    new PgOrderItemRepository(pool, asyncCtx),
+   inject: [PG_CONNECTION],
+  },
+  {
+   provide: CheckOutUseCase,
+   useFactory: (
+    cartRep: ICartRepository,
+    cartItemsRepo: ICartItemsRepository,
+    userRepo: IUserRepository,
+    orderRepo: IOrdersRepository,
+    orderItemRepo: IOrderItemsRepository,
+    productRepo: IProductRepository,
+   ) =>
+    new CheckOutUseCase(
+     cartRep,
+     cartItemsRepo,
+     userRepo,
+     orderRepo,
+     orderItemRepo,
+     productRepo,
+    ),
+   inject: [
+    CART_REPO,
+    CART_ITEMS_REPO,
+    USERS_REPO,
+    ORDER_REPO,
+    ORDER_ITEMS_REPO,
+    PRODUCT_REPO,
+   ],
+  },
+ ],
+ exports: [CheckOutUseCase],
 })
-export class CheckOutModule {}
+export class CheckOutModule { }
