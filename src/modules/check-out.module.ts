@@ -83,6 +83,7 @@ import { HelperQuery } from 'src/infrastructure/persistence/shared/helper-query'
     orderRepo: IOrdersRepository,
     orderItemRepo: IOrderItemsRepository,
     productRepo: IProductRepository,
+    uow: IUnitOfWork,
    ) =>
     new CheckOutUseCase(
      cartRep,
@@ -91,6 +92,7 @@ import { HelperQuery } from 'src/infrastructure/persistence/shared/helper-query'
      orderRepo,
      orderItemRepo,
      productRepo,
+     uow,
     ),
    inject: [
     CART_REPO,
