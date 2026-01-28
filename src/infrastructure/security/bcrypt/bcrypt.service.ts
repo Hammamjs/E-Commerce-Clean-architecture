@@ -1,4 +1,4 @@
-import { IBcryptService } from "src/domain/repositories/bcrypt.repository.interface";
+import { IBcryptService } from "src/domain/service/bcrypt.service.interface";
 import * as bcrypt from 'bcrypt';
 
 
