@@ -42,7 +42,7 @@ export class PgOrderItemRepository implements IOrderItemsRepository {
   async findByOrdersId(orderIds: string[]): Promise<OrderItem[]> {
     const client = this.getClient();
     const { rows, rowCount } = await client.query<OrderItemRow>(
-      SQL.findByOrdersIdQuery,
+      SQL.findByOrdersId,
       [orderIds],
     );
 
@@ -54,7 +54,7 @@ export class PgOrderItemRepository implements IOrderItemsRepository {
   async update(item: OrderItem): Promise<OrderItem> {
     const client = this.getClient();
 
-    const { rows } = await client.query<OrderItemRow>(SQL.updateQuery, [
+    const { rows } = await client.query<OrderItemRow>(SQL.update, [
       item.status,
       item.id,
     ]);
@@ -64,10 +64,10 @@ export class PgOrderItemRepository implements IOrderItemsRepository {
 
   async createFromCart(orderId: string, cartId: string): Promise<OrderItem[]> {
     const client = this.getClient();
-    const { rows } = await client.query<OrderItemRow>(
-      SQL.createItemsFromCartQuery,
-      [orderId, cartId],
-    );
+    const { rows } = await client.query<OrderItemRow>(SQL.createItemsFromCart, [
+      orderId,
+      cartId,
+    ]);
     return rows.map((row) => this._toEntity(row));
   }
 }

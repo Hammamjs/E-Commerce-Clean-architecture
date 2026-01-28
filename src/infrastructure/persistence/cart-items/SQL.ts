@@ -1,5 +1,5 @@
 export const SQL = {
-  findAllItemsInCartQuery: `
+  findAllItemsInCart: `
          SELECT 
            id,
            cart_id AS "cartId",
@@ -9,7 +9,7 @@ export const SQL = {
            created_at AS "createdAt"
          FROM cart_items
            WHERE cart_id = $1`,
-  insertItemQuery: `
+  insertItem: `
                INSERT INTO cart_items (cart_id, product_id,quantity, unit_price, total)
                VALUES ($1, $2, $3, $4, $5)
                ON CONFLICT (cart_id, product_id)
@@ -20,7 +20,7 @@ export const SQL = {
                 RETURNING id, cart_id AS "cartId", unit_price AS "unitPrice", total, created_at AS "createdAt", quantity, total
                `,
 
-  removeItemQuery: `
+  removeItem: `
                        UPDATE cart_items
                        SET 
                         quantity = quantity - $3,
@@ -34,5 +34,5 @@ export const SQL = {
                         unit_price AS "unitPrice",
                         created_at AS "createdAt"
                        `,
-  updateStatusQuery: `UPDATE order_items SET status = $1 WHERE id = $2 RETURNING`,
+  updateStatus: `UPDATE order_items SET status = $1 WHERE id = $2 RETURNING`,
 };

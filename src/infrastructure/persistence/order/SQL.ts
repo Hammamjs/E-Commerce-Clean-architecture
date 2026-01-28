@@ -1,20 +1,20 @@
 export const SQL = {
-  findAllOrdersPerUserQuery:
+  findAllOrdersPerUser:
     'SELECT id, total, status, created_at AS "createdAt" FROM orders WHERE user_id = $1',
-  findByIdQuery: `
+  findById: `
     SELECT * FROM orders WHERE id = $1 
     `,
-  updateStatusQuery: `
+  updateStatus: `
     UPDATE orders SET status = $1 WHERE id = $2 AND user_id = $3 RETURNING *
     `,
-  createQuery: `
+  create: `
       INSERT INTO orders (user_id, total)
       SELECT user_id, $2
       FROM carts
       WHERE user_id = $1
       RETURNING *
     `,
-  deleteQuery: `
+  delete: `
     DELETE FROM orders WHERE id = $1 RETURNING *
     `,
 };

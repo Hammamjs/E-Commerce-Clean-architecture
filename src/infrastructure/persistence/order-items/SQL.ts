@@ -1,5 +1,5 @@
 export const SQL = {
-  findByOrdersIdQuery: `
+  findByOrdersId: `
            SELECT
              id, 
              order_id AS "orderId", 
@@ -9,13 +9,13 @@ export const SQL = {
              status
            FROM order_items
              WHERE order_id = ANY($1)`,
-  updateQuery: `UPDATE
+  update: `UPDATE
        order_items 
        SET status = $1
         WHERE id = $2
          RETURNING *`,
 
-  createItemsFromCartQuery: `
+  createItemsFromCart: `
         INSERT INTO order_items (order_id, product_id, unit_price, quantity)
         SELECT $1, product_id, unit_price, quantity
         FROM cart_items

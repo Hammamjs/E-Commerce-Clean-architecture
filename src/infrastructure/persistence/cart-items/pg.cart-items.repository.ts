@@ -30,7 +30,7 @@ export class PgCartItemsReposiory implements ICartItemsRepository {
   async findAllItemsForCart(cartId: string): Promise<CartItems[]> {
     const client = this._getClient();
     const { rows, rowCount } = await client.query<CartItemsRow>(
-      SQL.findAllItemsInCartQuery,
+      SQL.findAllItemsInCart,
       [cartId],
     );
 
@@ -41,7 +41,7 @@ export class PgCartItemsReposiory implements ICartItemsRepository {
 
   async addItem(cart: CartItems): Promise<CartItems> {
     const client = this._getClient();
-    const { rows } = await client.query<CartItemsRow>(SQL.insertItemQuery, [
+    const { rows } = await client.query<CartItemsRow>(SQL.insertItem, [
       cart.cartId,
       cart.productId,
       cart.getQuantity(),
@@ -55,7 +55,7 @@ export class PgCartItemsReposiory implements ICartItemsRepository {
   async removeItem(cart: CartItems): Promise<CartItems> {
     // do isloation to prevent race condition or data corruption
     const client = this._getClient();
-    const { rows } = await client.query<CartItemsRow>(SQL.removeItemQuery, [
+    const { rows } = await client.query<CartItemsRow>(SQL.removeItem, [
       cart.cartId,
       cart.productId,
       cart.getQuantity(),

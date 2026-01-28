@@ -1,12 +1,12 @@
 export const SQL = {
-  findAllQuery: `
+  findAll: `
         SELECT
           id, name,
           price, in_stock AS "inStock", 
           created_at AS "createdAt" 
         FROM products
         `,
-  findOneQuery: `
+  findById: `
         SELECT
           id, name,
           price, in_stock AS "inStock", 
@@ -14,14 +14,17 @@ export const SQL = {
         FROM products
         WHERE id = $1
         `,
-  dcreaseStockQuery: `UPDATE products
+  create: (toUpdate: string, toUpdateSignature: string) => `
+     INSERT INTO products (${toUpdate}) VALUES (${toUpdateSignature}) RETURNING id, name, price, in_stock AS "inStock", created_at "createdAt"
+     `,
+  update: (toUpdate: string, idIndx: number) => `
+     UPDATE products SET ${toUpdate} WHERE id = $${idIndx} RETURNING id, name, price, in_stock AS "inStock", created_at AS "createdAt"
+     `,
+  dcreaseStock: `UPDATE products
     SET in_stock = in_stock - $2
     WHERE id = $1 AND in_stock >= $2
     RETURNING in_stock
     `,
-  createQuery: (fields: string, fieldsCount: string) => `
-     INSERT INTO products (${fields}) VALUES (${fieldsCount}) RETURNING id, name, price, in_stock AS "inStock", created_at "createdAt"
-     `,
-  increaseStockQuery: `UPDATE products SET in_stock = in_stock + $2 WHERE id = $1 RETURNING in_stock AS "inStock"`,
-  deleteOneQuery: `DELETE FROM products WHERE id = $1 RETURNING *`,
+  increaseStock: `UPDATE products SET in_stock = in_stock + $2 WHERE id = $1 RETURNING in_stock AS "inStock"`,
+  delete: `DELETE FROM products WHERE id = $1 RETURNING *`,
 };

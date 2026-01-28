@@ -1,6 +1,7 @@
 import {
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsPositive,
   IsString,
   MinLength,
@@ -19,4 +20,8 @@ export class CreateProductDto {
   @IsNotEmpty()
   @IsPositive({ message: 'Price must be greater than zero' })
   inStock: number;
+
+  @IsOptional()
+  @IsPositive()
+  quantity: number;
 }

@@ -26,13 +26,6 @@ export class PgCartRepository implements ICartRepository {
     status: 'status',
   };
 
-  // private toRow(cart: Cart) {
-  //   return {
-  //     userId: cart.userId,
-  //     status: cart.getStatus(),
-  //   };
-  // }
-
   async findById(id: string): Promise<Cart | null> {
     const client = this._getClient();
     const { rows, rowCount } = await client.query<CartRow>(SQL.findByIdQuery, [

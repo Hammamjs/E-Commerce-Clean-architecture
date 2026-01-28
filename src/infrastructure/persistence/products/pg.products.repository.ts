@@ -3,14 +3,15 @@ import { Pool, PoolClient } from 'pg';
 import { Products } from 'src/domain/entities/products.entity';
 import { asyncContext, AsyncContext } from '../async-context/async-context';
 import { InsufficientQuantityError } from 'src/application/errors/insufficient.error';
-import { InternalServerError } from 'src/application/errors/internal-server.error';
 import { SQL } from './SQL';
 import { ProductRow } from './product.row';
+import { HelperQuery } from '../shared/helper-query';
 
 export class PgProductsRepository implements IProductRepository {
   constructor(
     private readonly _conn: Pool,
     private readonly _asyncContext: AsyncContext = asyncContext,
+    private readonly _helperQuery: HelperQuery,
   ) {}
 
   private readonly _allowedColumns = ['name', 'price', 'inStock'];
@@ -36,7 +37,7 @@ export class PgProductsRepository implements IProductRepository {
 
   async findAll(): Promise<Products[]> {
     const client = this._getClient();
-    const { rows, rowCount } = await client.query<ProductRow>(SQL.findAllQuery);
+    const { rows, rowCount } = await client.query<ProductRow>(SQL.findAll);
 
     if (rowCount === 0) return [];
 
@@ -45,12 +46,7 @@ export class PgProductsRepository implements IProductRepository {
 
   async findProduct(id: string): Promise<Products | null> {
     const client = this._getClient();
-    const { rows, rowCount } = await client.query<ProductRow>(
-      SQL.findOneQuery,
-      [id],
-    );
-
-    if (rowCount === 0) return null;
+    const { rows } = await client.query<ProductRow>(SQL.findById, [id]);
 
     return this._toEntity(rows[0]);
   }
@@ -60,33 +56,49 @@ export class PgProductsRepository implements IProductRepository {
     quantity: number,
   ): Promise<{ inStock: number }> {
     const client = this._getClient();
-    const { rowCount, rows } = await client.query<{ inStock: number }>(
-      SQL.increaseStockQuery,
+    const { rows } = await client.query<{ inStock: number }>(
+      SQL.increaseStock,
       [productId, quantity],
     );
-
-    if (rowCount === 0) throw new InternalServerError();
 
     return rows[0];
   }
 
-  async decreaseStockWitTx(productId: string, quantity: number): Promise<void> {
+  async decreaseStockWitTx(
+    productId: string,
+    quantity: number,
+  ): Promise<Products> {
     const client = this._getClient();
-    const { rowCount } = await client.query<{ in_stock: number }>(
-      SQL.dcreaseStockQuery,
-      [productId, quantity],
-    );
+    const { rows: product } = await client.query<ProductRow>(SQL.dcreaseStock, [
+      productId,
+      quantity,
+    ]);
 
-    if (rowCount === 0) throw new InsufficientQuantityError();
-
-    return;
+    return this._toEntity(product[0]);
   }
 
   async create(product: Products): Promise<Products | null> {
-    const { fields, fieldsCount, values } =
-      this._createProductValidation(product);
+    const { toUpdate, toUpdateSignature, values } = this._helperQuery.create(
+      product,
+      this._allowedColumns,
+      this._columnMap,
+    );
 
-    if (!values.length) return null;
+    const client = this._getClient();
+
+    const { rows } = await client.query<ProductRow>(
+      SQL.create(toUpdate, toUpdateSignature),
+      values,
+    );
+    return this._toEntity(rows[0]);
+  }
+
+  async update(product: Products): Promise<Products | null> {
+    const { toUpdate, values } = this._helperQuery.update(
+      product,
+      this._allowedColumns,
+      this._columnMap,
+    );
 
     const client = this._getClient();
 
@@ -97,64 +109,10 @@ export class PgProductsRepository implements IProductRepository {
     return this._toEntity(rows[0]);
   }
 
-  async update(product: Products): Promise<Products | null> {
-    const { fields, values } = this._updateProductValidation(product);
-
-    if (!fields || !values.length) return null;
-
-    const client = this._getClient();
-
-    const { rows } = await client.query<ProductRow>(
-      `
-       UPDATE products SET ${fields} WHERE id = $${values.length + 1} RETURNING id, name, price, in_stock AS "inStock", created_at AS "createdAt"
-       `,
-      [...values, product.id],
-    );
-    return this._toEntity(rows[0]);
-  }
-
   async deleteProduct(id: string): Promise<Products | null> {
     const client = this._getClient();
 
-    const { rows, rowCount } = await client.query<ProductRow>(
-      SQL.deleteOneQuery,
-      [id],
-    );
-    if (rowCount === 0) return null;
+    const { rows } = await client.query<ProductRow>(SQL.delete, [id]);
     return this._toEntity(rows[0]);
-  }
-
-  // ******* Helper utilty ************
-
-  private _updateProductValidation(data: Products) {
-    const entries = Object.entries(data).filter(
-      ([k, v]) => v !== undefined && this._allowedColumns.includes(k),
-    );
-
-    const fields = entries
-      .map(([k], i) => `${this._columnMap[k]} = $${i + 1}`)
-      .join(', ');
-    const values = entries.map(([, v]) => v as string);
-
-    return {
-      fields,
-      values,
-    };
-  }
-
-  private _createProductValidation(product: Products) {
-    const entries = Object.entries(product).filter(
-      ([k, v]) => v !== undefined && this._allowedColumns.includes(k),
-    );
-
-    const fields = entries.map(([k]) => `${this._columnMap[k]}`).join(', ');
-    const fieldsCount = entries.map((_, i) => `$${i + 1}`).join(', ');
-    const values = entries.map(([, v]) => v as string);
-
-    return {
-      fields,
-      fieldsCount,
-      values,
-    };
   }
 }

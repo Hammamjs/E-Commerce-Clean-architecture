@@ -37,7 +37,7 @@ export class PgOrdersRepository implements IOrdersRepository {
   async findAll(userId: string): Promise<Orders[]> {
     const client = this._getClient();
     const { rows: orders, rowCount } = await client.query<OrderRow>(
-      SQL.findAllOrdersPerUserQuery,
+      SQL.findAllOrdersPerUser,
       [userId],
     );
 
@@ -48,21 +48,14 @@ export class PgOrdersRepository implements IOrdersRepository {
 
   async findById(id: string): Promise<Orders | null> {
     const client = this._getClient();
-    const { rows, rowCount } = await client.query<OrderRow>(SQL.findByIdQuery, [
-      id,
-    ]);
+    const { rows, rowCount } = await client.query<OrderRow>(SQL.findById, [id]);
     if (rowCount === 0) return null;
     return this.toEntity(rows[0]);
   }
 
   async createOrder(userId: string, total: number): Promise<Orders | null> {
     const client = this._getClient();
-    const { rows, rowCount } = await client.query<OrderRow>(SQL.createQuery, [
-      userId,
-      total,
-    ]);
-
-    if (rowCount === 0) return null;
+    const { rows } = await client.query<OrderRow>(SQL.create, [userId, total]);
 
     return this.toEntity(rows[0]);
   }
@@ -73,10 +66,11 @@ export class PgOrdersRepository implements IOrdersRepository {
     status: Status,
   ): Promise<Orders | null> {
     const client = this._getClient();
-    const { rows, rowCount } = await client.query<OrderRow>(
-      SQL.updateStatusQuery,
-      [status, orderId, userId],
-    );
+    const { rows, rowCount } = await client.query<OrderRow>(SQL.updateStatus, [
+      status,
+      orderId,
+      userId,
+    ]);
 
     if (rowCount === 0) return null;
 
@@ -85,9 +79,7 @@ export class PgOrdersRepository implements IOrdersRepository {
 
   async deleteOrder(id: string): Promise<Orders | null> {
     const client = this._getClient();
-    const { rows, rowCount } = await client.query<OrderRow>(SQL.deleteQuery, [
-      id,
-    ]);
+    const { rows, rowCount } = await client.query<OrderRow>(SQL.delete, [id]);
 
     if (rowCount === 0) return null;
 
