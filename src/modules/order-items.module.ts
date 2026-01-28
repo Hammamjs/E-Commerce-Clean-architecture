@@ -11,7 +11,6 @@ import { IOrdersRepository } from 'src/domain/repositories/order.repository.inte
 import { Pool } from 'pg';
 import { PG_CONNECTION } from 'src/infrastructure/database/pg-connection';
 import { OrdersModule } from './orders.module';
-import { CreateOrderFromCartUseCase } from 'src/application/use-cases/order-items/create-order-from-cart.use-case';
 
 @Module({
  controllers: [OrderItemsController],
@@ -25,9 +24,8 @@ import { CreateOrderFromCartUseCase } from 'src/application/use-cases/order-item
     const updateStatusUseCase = new UpdateOrderItemStatusUseCase(repo);
     const findUserItemsUseCase = new FindUserOrderItemsUseCase(repo, oderRepo);
     const findItemUseCase = new FindItemUseCase(repo);
-    const createOrderItemUseCase = new CreateOrderFromCartUseCase(repo);
 
-    return new OrderItemFacade(findItemUseCase, findUserItemsUseCase, createOrderItemUseCase, updateStatusUseCase);
+    return new OrderItemFacade(findItemUseCase, findUserItemsUseCase, updateStatusUseCase);
    },
    inject: ['IOrderItemsRepository', 'IOrdersRepository'],
   },
