@@ -20,9 +20,9 @@ export class SignUpUseCase implements IUseCase<SignUpCommand, { user: User, acce
    throw new Error("User already exists");
   }
 
-  const accessToken = this._tokenService.signToken({ email: newUser.email }, '15min')
+  const accessToken = await this._tokenService.generateToken({ email: newUser.email }, '15min')
 
-  const refreshToken = this._tokenService.signToken({ email: newUser.email }, '7d')
+  const refreshToken = await this._tokenService.generateToken({ email: newUser.email }, '7d')
 
   await this._refreshTokenRepository.save(refreshToken, newUser.email);
 
