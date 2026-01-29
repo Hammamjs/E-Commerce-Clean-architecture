@@ -14,12 +14,13 @@ export class PgUserRepository implements IUserRepository {
  private _columnMap = {
   fullName: 'full_name',
   email: 'email',
+  password: 'password',
  };
 
- private readonly _allowedColumns = ['email', 'fullName'];
+ private readonly _allowedColumns = ['email', 'fullName', 'password'];
 
  private _toEntity(row: UserRow): User {
-  return new User(row.fullName, row.email, row.id, row.createdAt);
+  return new User(row.fullName, row.email, row.password, row.id, row.createdAt);
  }
 
  async findAll(): Promise<User[]> {
@@ -69,7 +70,6 @@ export class PgUserRepository implements IUserRepository {
 
  async findByEmail(email: string): Promise<User | null> {
   const { rows } = await this._conn.query<UserRow>(SQL.findByEmail, [email]);
-
   return rows[0] ? this._toEntity(rows[0]) : null;
  }
 
