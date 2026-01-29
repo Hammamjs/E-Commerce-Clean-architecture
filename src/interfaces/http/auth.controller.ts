@@ -1,6 +1,7 @@
 import { Body, ConflictException, Controller, Post } from "@nestjs/common";
 import { SignupDto } from "../dto/authDto/signup-dto";
 import { AuthFacade } from "src/application/use-cases/auth/auth.facade";
+import { SignupResponse } from "../dto/authDto/signup-response";
 
 
 @Controller('auth')
@@ -10,8 +11,7 @@ export class AuthController {
  async signup(@Body() signupDto: SignupDto) {
   try {
    const { user, accessToken } = await this.authFacade.signup.execute(signupDto)
-   if (user) throw new ConflictException("User already exists")
-   return { user, accessToken }
+   return new SignupResponse(user, accessToken)
   } catch (error) {
    throw new ConflictException(error.message)
   }
