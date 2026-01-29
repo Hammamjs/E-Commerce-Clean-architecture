@@ -9,25 +9,27 @@ import { LoggerModule } from './logger/logger.module';
 import { RequestContextMiddleware } from './middleware/request-context.middleware';
 import { OrderItemsModule } from './modules/order-items.module';
 import { CheckOutModule } from './modules/check-out.module';
+import { AuthModule } from './modules/auth.module';
 
 @Module({
-  imports: [
-    UsersModule,
-    // make env file visible for whole project
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
-    CartModule,
-    ProductsModule,
-    OrdersModule,
-    CartItemsModule,
-    LoggerModule,
-    OrderItemsModule,
-    CheckOutModule,
-  ],
+ imports: [
+  UsersModule,
+  // make env file visible for whole project
+  ConfigModule.forRoot({
+   isGlobal: true,
+  }),
+  CartModule,
+  ProductsModule,
+  OrdersModule,
+  CartItemsModule,
+  LoggerModule,
+  OrderItemsModule,
+  CheckOutModule,
+  AuthModule
+ ],
 })
 export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(RequestContextMiddleware).forRoutes('');
-  }
+ configure(consumer: MiddlewareConsumer) {
+  consumer.apply(RequestContextMiddleware).forRoutes('');
+ }
 }
