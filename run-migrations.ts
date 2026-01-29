@@ -9,7 +9,8 @@ async function run() {
    databaseUrl: config.databaseUrl,
    direction: 'up',
    migrationsTable: 'migrations',
-   verbose: true
+   verbose: true,
+   checkOrder: false,
   })
   console.log("✅ Migrations completed successfully")
  } catch (error) {
