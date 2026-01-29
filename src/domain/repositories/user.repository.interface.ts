@@ -3,10 +3,10 @@ import { User } from '../entities/user.entity';
 type UserOrNull = User | null;
 
 export interface IUserRepository {
-  findById(id: string): Promise<UserOrNull>;
-  create(user: User): Promise<UserOrNull>;
-  update(user: User): Promise<UserOrNull>;
-  findAll(): Promise<User[]>;
-  deleteById(id: string): Promise<UserOrNull>;
-  findByEmail(email: string): Promise<UserOrNull>;
+ findById(id: string): Promise<UserOrNull>;
+ create(user: User): Promise<UserOrNull>;
+ update(user: User): Promise<UserOrNull>;
+ findAll(): Promise<User[]>;
+ deleteById(id: string): Promise<UserOrNull>;
+ findByEmail(email: string): Promise<User | null>;
 }
