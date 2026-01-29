@@ -1,6 +1,7 @@
 export interface UserRow {
-  id: string;
-  fullName: string;
-  email: string;
-  createdAt: string;
+ id: string;
+ fullName: string;
+ email: string;
+ createdAt: string;
+ password?: string;
 }
