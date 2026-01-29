@@ -5,15 +5,16 @@ import { ITokenService } from "src/domain/service/jwt-token.repository.interface
 import { IBcryptService } from "src/domain/service/bcrypt.service.interface";
 import { IUserRepository } from "src/domain/repositories/user.repository.interface";
 import { IRefreshTokenRepository } from "src/domain/repositories/refresh-token.repository.interface";
+import { SignUpResult } from "src/application/command/auth/sign-up-result.command";
 
-export class SignUpUseCase implements IUseCase<SignUpCommand, { user: User, accessToken: string }> {
+export class SignUpUseCase implements IUseCase<SignUpCommand, SignUpResult> {
  constructor(
   private readonly _userRepository: IUserRepository,
   private readonly _tokenService: ITokenService,
-  private readonly _bcryptRepository: IBcryptService,
+  private readonly _bcryptService: IBcryptService,
   private readonly _refreshTokenRepository: IRefreshTokenRepository
  ) { }
- async execute(newUser: SignUpCommand): Promise<{ user: User, accessToken: string }> {
+ async execute(newUser: SignUpCommand): Promise<SignUpResult> {
   const userExists = await this._userRepository.findByEmail(newUser.email);
 
   if (userExists) {
@@ -26,7 +27,7 @@ export class SignUpUseCase implements IUseCase<SignUpCommand, { user: User, acce
 
   await this._refreshTokenRepository.save(refreshToken, newUser.email);
 
-  const hashedPassword = await this._bcryptRepository.hashPassword(newUser.password);
+  const hashedPassword = await this._bcryptService.hashPassword(newUser.password);
 
   const user = new User(newUser.name, newUser.email, hashedPassword);
   await this._userRepository.create(user);

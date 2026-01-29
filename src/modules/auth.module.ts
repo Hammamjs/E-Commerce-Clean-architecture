@@ -15,6 +15,7 @@ import { HelperQuery } from "src/infrastructure/persistence/shared/helper-query"
 import { BcryptService } from "src/infrastructure/security/bcrypt/bcrypt.service";
 import { PG_CONNECTION } from "src/infrastructure/database/pg-connection";
 import { BCRYPT_SERVICE, REFRESH_TOKEN_REPO, TOKEN_SERVICE, USERS_REPO } from "src/interfaces/di/tokens.di";
+import { SignInUseCase } from "src/application/use-cases/auth/sign-in.use-case";
 
 @Module({
  controllers: [AuthController],
@@ -29,7 +30,7 @@ import { BCRYPT_SERVICE, REFRESH_TOKEN_REPO, TOKEN_SERVICE, USERS_REPO } from "s
   {
    provide: AuthFacade,
    useFactory: (userRepo: IUserRepository, tokenService: ITokenService, bcryptService: IBcryptService
-    , refreshRepo: IRefreshTokenRepository) => new AuthFacade(new SignUpUseCase(userRepo, tokenService, bcryptService, refreshRepo)),
+    , refreshRepo: IRefreshTokenRepository) => new AuthFacade(new SignUpUseCase(userRepo, tokenService, bcryptService, refreshRepo), new SignInUseCase(userRepo, bcryptService, tokenService, refreshRepo)),
    inject: [USERS_REPO, TOKEN_SERVICE, BCRYPT_SERVICE, REFRESH_TOKEN_REPO]
   }
  ],
